@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: 'Newsreader', Georgia, serif;
+  --font-sans: 'IBM Plex Sans', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  color-scheme: light;
+}
+
+body {
+  background-color: #F8F9FA;
+  color: #0F172A;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Enforce tabular figures across all currency and numeric elements */
+.font-mono,
+.tabular-nums,
+[data-amount] {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+/* Architectural hairline scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F8F9FA;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Purposeful Graph Morph Transitions */
+.graph-edge-path {
+  transition: d 420ms cubic-bezier(0.16, 1, 0.3, 1),
+              stroke 250ms ease,
+              stroke-width 250ms cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 250ms ease;
+}
+
+.graph-edge-label {
+  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 250ms ease;
+}
+
+.graph-node {
+  cursor: pointer;
+  transition: opacity 200ms ease;
+}
+
+.graph-node circle {
+  transition: r 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              stroke-width 200ms ease,
+              fill 200ms ease,
+              stroke 200ms ease,
+              filter 200ms ease;
+}
+
+.graph-node text {
+  pointer-events: none;
+  user-select: none;
+}
