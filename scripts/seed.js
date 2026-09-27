@@ -11,6 +11,9 @@
  * 4. Seeds an initial demo group with realistic expenses across currencies.
  */
 
+const { loadEnvConfig } = require('@next/env');
+loadEnvConfig(process.cwd());
+
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const os = require('os');

@@ -1,3 +1,6 @@
+const { loadEnvConfig } = require('@next/env');
+loadEnvConfig(process.cwd());
+
 const { MongoMemoryReplSet } = require('mongodb-memory-server');
 const { spawn } = require('child_process');
 const net = require('net');
@@ -32,22 +35,28 @@ async function start() {
   console.log('====================================================\n');
 
   let replSet = null;
-  const inUse = await isPortInUse(PORT_MONGO);
+  const isRemoteMongo = process.env.MONGODB_URI && !process.env.MONGODB_URI.includes('127.0.0.1') && !process.env.MONGODB_URI.includes('localhost');
 
-  if (inUse) {
-    console.log(`✓ Detected existing MongoDB service running on port ${PORT_MONGO}.`);
+  if (isRemoteMongo) {
+    console.log(`✓ Using remote MongoDB cluster: ${process.env.MONGODB_URI.replace(/:[^:]*@/, ':****@')}`);
   } else {
-    console.log(`Starting embedded MongoDB Replica Set on port ${PORT_MONGO}...`);
-    if (!fs.existsSync(DB_PATH)) {
-      fs.mkdirSync(DB_PATH, { recursive: true });
+    const inUse = await isPortInUse(PORT_MONGO);
+
+    if (inUse) {
+      console.log(`✓ Detected existing MongoDB service running on port ${PORT_MONGO}.`);
+    } else {
+      console.log(`Starting embedded MongoDB Replica Set on port ${PORT_MONGO}...`);
+      if (!fs.existsSync(DB_PATH)) {
+        fs.mkdirSync(DB_PATH, { recursive: true });
+      }
+
+      replSet = await MongoMemoryReplSet.create({
+        replSet: { count: 1, storageEngine: 'wiredTiger' },
+        instanceOpts: [{ port: PORT_MONGO, dbPath: DB_PATH }],
+      });
+
+      console.log(`✓ Embedded MongoDB Replica Set online at port ${PORT_MONGO} (ACID transactions enabled).`);
     }
-
-    replSet = await MongoMemoryReplSet.create({
-      replSet: { count: 1, storageEngine: 'wiredTiger' },
-      instanceOpts: [{ port: PORT_MONGO, dbPath: DB_PATH }],
-    });
-
-    console.log(`✓ Embedded MongoDB Replica Set online at port ${PORT_MONGO} (ACID transactions enabled).`);
   }
 
   // Run Seed script
