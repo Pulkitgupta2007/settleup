@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { Group, Expense, LedgerEntry } = require('../models');
-const { simplifyDebts } = require('../simplifier');
+const { simplifyDebts } = require('../cppBridge');
 const { convertAmount } = require('./currencyService');
 
 /**

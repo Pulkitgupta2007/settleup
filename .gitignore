@@ -18,6 +18,7 @@ dist/
 .DS_Store
 
 # C++ Binaries
+bin/
 settleup_cli
 *.o
 *.out

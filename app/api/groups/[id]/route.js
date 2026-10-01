@@ -2,7 +2,7 @@ const { NextResponse } = require('next/server');
 const { connectToDatabase } = require('../../../../src/lib/db');
 const { Group, LedgerEntry, User } = require('../../../../src/models');
 const { getUnsettledPairwiseDebts, formatGroupConstraints } = require('../../../../src/services/settlementService');
-const { simplifyDebts } = require('../../../../src/simplifier');
+const { simplifyDebts, getEngineInfo } = require('../../../../src/cppBridge');
 const { validateObjectId } = require('../../../../src/lib/validators');
 const { NotFoundError, ValidationError, formatErrorResponse } = require('../../../../src/lib/errors');
 
@@ -102,6 +102,7 @@ async function GET(request, { params }) {
         rawDebts: rawDebtsNamed,
         settlementDebts: settlementDebtsNamed,
         isFullySettled: minimalTransactions.length === 0,
+        settlementEngine: getEngineInfo(),
       },
     });
   } catch (err) {

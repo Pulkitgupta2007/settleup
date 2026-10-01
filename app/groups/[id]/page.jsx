@@ -742,9 +742,20 @@ export default function GroupDetailPage({ params }) {
         <section className="space-y-4">
           <div className="flex items-center justify-between border-b border-ledger-border pb-2">
             <div>
-              <h3 className="font-display text-lg text-bone font-medium">
-                Debt Settlement Topology
-              </h3>
+              <div className="flex items-center gap-2.5">
+                <h3 className="font-display text-lg text-bone font-medium">
+                  Debt Settlement Topology
+                </h3>
+                {groupData?.settlementEngine && (
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-mono border border-ledger-border bg-ledger-subpanel text-bone"
+                    title={groupData.settlementEngine.binaryPath || 'In-memory JavaScript Engine'}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${groupData.settlementEngine.type === 'cpp' ? 'bg-credit' : 'bg-brass'}`} />
+                    {groupData.settlementEngine.type === 'cpp' ? 'Engine: C++ Native OOP (IPC)' : 'Engine: JavaScript V8'}
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-bone-muted font-sans">
                 Direct cycle netting and optimal transfer reduction.
               </p>

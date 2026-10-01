@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "seed": "node scripts/seed.js",
+    "build:cpp": "mkdir -p bin && g++ -std=c++17 -O2 settleup.cpp -o bin/settleup_cli",
     "test": "jest"
   },
   "keywords": [],

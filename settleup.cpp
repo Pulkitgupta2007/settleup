@@ -445,6 +445,26 @@ public:
         std::cout << "  * Invariant Assertion   : EXACT ZERO-SUM CONSERVED ($0.00 drift)\n";
         std::cout << "======================================================================\n\n";
     }
+
+    std::string toJson() const {
+        std::ostringstream oss;
+        oss << "{\"success\":true,\"engine\":\"C++ Native OOP Engine (v1.0)\",";
+        oss << "\"strategy\":\"" << strategyName << "\",";
+        oss << "\"settlement\":[";
+        for (size_t i = 0; i < settlementPlan.size(); ++i) {
+            if (i > 0) oss << ",";
+            oss << "{\"from\":\"" << settlementPlan[i].getDebtor() << "\","
+                << "\"to\":\"" << settlementPlan[i].getCreditor() << "\","
+                << "\"amount\":" << settlementPlan[i].getAmount().getCents() << ","
+                << "\"description\":\"" << settlementPlan[i].getDescription() << "\"}";
+        }
+        oss << "],\"metrics\":{";
+        oss << "\"rawCount\":" << rawTransactions.size() << ",";
+        oss << "\"settledCount\":" << settlementPlan.size() << ",";
+        oss << "\"rawVolume\":" << rawTotalVolume.getCents() << ",";
+        oss << "\"settledVolume\":" << settledTotalVolume.getCents() << "}}";
+        return oss.str();
+    }
 };
 
 // ==============================================================================
@@ -603,12 +623,102 @@ void runInteractiveCLI() {
     }
 }
 
+// ==============================================================================
+// 8. JSON BRIDGE FOR NEXT.JS / NODE.JS INTEROPERABILITY
+// ==============================================================================
+
+static std::string extractJsonString(const std::string& obj, const std::string& key) {
+    std::string pattern = "\"" + key + "\"";
+    size_t keyPos = obj.find(pattern);
+    if (keyPos == std::string::npos) return "";
+    size_t colonPos = obj.find(':', keyPos + pattern.length());
+    if (colonPos == std::string::npos) return "";
+    size_t quoteStart = obj.find('"', colonPos + 1);
+    if (quoteStart == std::string::npos) return "";
+    size_t quoteEnd = obj.find('"', quoteStart + 1);
+    if (quoteEnd == std::string::npos) return "";
+    return obj.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
+}
+
+static long long extractJsonNumber(const std::string& obj, const std::string& key) {
+    std::string pattern = "\"" + key + "\"";
+    size_t keyPos = obj.find(pattern);
+    if (keyPos == std::string::npos) return 0;
+    size_t colonPos = obj.find(':', keyPos + pattern.length());
+    if (colonPos == std::string::npos) return 0;
+    size_t numStart = obj.find_first_of("0123456789-", colonPos + 1);
+    if (numStart == std::string::npos) return 0;
+    size_t numEnd = obj.find_first_not_of("0123456789", numStart + (obj[numStart] == '-' ? 1 : 0));
+    std::string numStr = obj.substr(numStart, numEnd - numStart);
+    try {
+        return std::stoll(numStr);
+    } catch (...) {
+        return 0;
+    }
+}
+
+void runJsonMode() {
+    std::string input((std::istreambuf_iterator<char>(std::cin)),
+                       std::istreambuf_iterator<char>());
+
+    if (input.empty()) {
+        std::cout << "{\"success\":false,\"error\":\"Empty JSON input\"}\n";
+        return;
+    }
+
+    std::string strategyName = extractJsonString(input, "strategy");
+    if (strategyName.empty()) strategyName = "greedy";
+
+    SettleUpGroup group("API Group", "USD");
+    if (strategyName == "exact") {
+        group.setStrategy(std::make_unique<ExactMatchGreedyStrategy>());
+    } else {
+        group.setStrategy(std::make_unique<GreedyHeapStrategy>());
+    }
+
+    size_t debtsPos = input.find("\"debts\"");
+    if (debtsPos != std::string::npos) {
+        size_t arrayStart = input.find('[', debtsPos);
+        size_t arrayEnd = input.find(']', arrayStart);
+        if (arrayStart != std::string::npos && arrayEnd != std::string::npos) {
+            size_t cursor = arrayStart;
+            while (cursor < arrayEnd) {
+                size_t objStart = input.find('{', cursor);
+                if (objStart == std::string::npos || objStart >= arrayEnd) break;
+                size_t objEnd = input.find('}', objStart);
+                if (objEnd == std::string::npos || objEnd > arrayEnd) break;
+
+                std::string debtObj = input.substr(objStart, objEnd - objStart + 1);
+                std::string from = extractJsonString(debtObj, "from");
+                std::string to = extractJsonString(debtObj, "to");
+                long long amount = extractJsonNumber(debtObj, "amount");
+
+                if (!from.empty() && !to.empty() && amount > 0) {
+                    try {
+                        group.recordTransaction(from, to, Money(amount));
+                    } catch (...) {}
+                }
+                cursor = objEnd + 1;
+            }
+        }
+    }
+
+    try {
+        SettlementReport report = group.generateSettlementPlan();
+        std::cout << report.toJson() << "\n";
+    } catch (const std::exception& ex) {
+        std::cout << "{\"success\":false,\"error\":\"" << ex.what() << "\"}\n";
+    }
+}
+
 int main(int argc, char* argv[]) {
     std::ios_base::sync_with_stdio(false);
     std::cin.tie(NULL);
 
     try {
-        if (argc > 1 && std::string(argv[1]) == "--demo") {
+        if (argc > 1 && std::string(argv[1]) == "--json") {
+            runJsonMode();
+        } else if (argc > 1 && std::string(argv[1]) == "--demo") {
             runOOPDemo();
         } else {
             std::cout << "Choose Mode:\n";

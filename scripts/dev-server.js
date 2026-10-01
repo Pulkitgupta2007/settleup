@@ -59,6 +59,20 @@ async function start() {
     }
   }
 
+  // Compile / Verify Native C++ Settlement Engine
+  const binDir = path.join(process.cwd(), 'bin');
+  const cppSrc = path.join(process.cwd(), 'settleup.cpp');
+  if (fs.existsSync(cppSrc)) {
+    try {
+      if (!fs.existsSync(binDir)) fs.mkdirSync(binDir, { recursive: true });
+      const { execSync } = require('child_process');
+      execSync('g++ -std=c++17 -O2 settleup.cpp -o bin/settleup_cli', { stdio: 'ignore' });
+      console.log('✓ C++ Native Settlement Engine compiled and active at bin/settleup_cli');
+    } catch (_) {
+      console.log('ℹ C++ compiler unavailable; using JavaScript V8 settlement engine fallback.');
+    }
+  }
+
   // Run Seed script
   console.log('\nChecking / seeding initial demo data...');
   try {
