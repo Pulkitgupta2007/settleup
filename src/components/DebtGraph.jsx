@@ -28,20 +28,9 @@ const GRAPH_CONFIG = {
  * - Tabular numbers and monospaced typography matching the custom visual identity.
  */
 export default function DebtGraph({
-  participants = ['Alice', 'Bob', 'Charlie', 'David', 'Emma'],
-  rawDebts = [
-    { from: 'Alice', to: 'Bob', amount: 3000 },
-    { from: 'Bob', to: 'Charlie', amount: 4000 },
-    { from: 'Charlie', to: 'Alice', amount: 2000 },
-    { from: 'David', to: 'Bob', amount: 2500 },
-    { from: 'Charlie', to: 'Emma', amount: 3500 },
-    { from: 'Alice', to: 'Emma', amount: 1500 },
-  ],
-  settlementDebts = [
-    { from: 'Alice', to: 'Emma', amount: 2500 },
-    { from: 'David', to: 'Emma', amount: 2500 },
-    { from: 'Charlie', to: 'Bob', amount: 1500 },
-  ],
+  participants = [],
+  rawDebts = [],
+  settlementDebts = [],
   currency = 'USD',
   width = 640,
   height = 540,
@@ -143,6 +132,16 @@ export default function DebtGraph({
   const cashReduction = rawTotal > 0
     ? Math.round(((rawTotal - settledTotal) / rawTotal) * 100)
     : 0;
+
+  if (!participants || participants.length < 2) {
+    return (
+      <div className="border border-ledger-border bg-ledger-panel p-8 text-center space-y-2">
+        <p className="text-xs font-mono text-bone-muted">
+          At least 2 members are required to construct a debt graph.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full border border-ledger-border bg-ledger-panel text-bone p-3.5 sm:p-6 font-sans">

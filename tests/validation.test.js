@@ -17,7 +17,7 @@ const {
   TransactionError,
   formatErrorResponse,
 } = require('../src/lib/errors');
-const { recordExpense, settleGroup } = require('../src/services/settlementService');
+const { recordExpense } = require('../src/services/settlementService');
 
 let replSet;
 
