@@ -94,7 +94,7 @@ export default function HomePage() {
     <main className="min-h-screen bg-ledger-canvas text-bone flex flex-col justify-between">
       {/* Masthead */}
       <header className="border-b border-ledger-border bg-ledger-panel">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-baseline gap-3">
             <h1 className="font-display text-2xl tracking-tight text-bone font-medium">
               SettleUp
@@ -104,7 +104,7 @@ export default function HomePage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-mono">
+          <div className="flex items-center justify-between sm:justify-end gap-4 text-xs font-mono">
             <span className="text-bone-muted hidden sm:inline">
               Base Currency: <strong className="text-bone font-medium">USD ($)</strong>
             </span>
@@ -119,9 +119,9 @@ export default function HomePage() {
       </header>
 
       {/* Main Content Workspace */}
-      <div className="max-w-7xl mx-auto px-6 py-8 w-full space-y-8 flex-1">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full space-y-6 sm:space-y-8 flex-1">
         {/* Architectural Principles Strip */}
-        <section className="border border-ledger-border bg-ledger-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-ledger-border">
+        <section className="border border-ledger-border bg-ledger-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-ledger-border">
           <div className="p-4">
             <span className="text-[11px] font-sans text-bone-muted block mb-1">
               Direct Cycle Netting
@@ -237,7 +237,7 @@ export default function HomePage() {
         {/* Tab 2: Append-Only Immutable Ledger */}
         {activeTab === 'ledger' && (
           <section className="border border-ledger-border bg-ledger-panel overflow-x-auto">
-            <div className="p-4 border-b border-ledger-border flex items-center justify-between">
+            <div className="p-4 border-b border-ledger-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <div>
                 <h3 className="font-display text-base text-bone font-medium">
                   Append-Only Journal Entries
@@ -246,12 +246,12 @@ export default function HomePage() {
                   Write-once double-entry records. Mutations are rejected at the data tier.
                 </p>
               </div>
-              <span className="text-[11px] font-mono px-2 py-0.5 bg-ledger-subpanel border border-ledger-border text-credit">
+              <span className="text-[11px] font-mono px-2 py-0.5 bg-ledger-subpanel border border-ledger-border text-credit shrink-0">
                 Reconciled: Net Sum = $0.00
               </span>
             </div>
 
-            <table className="w-full text-left border-collapse text-xs font-mono">
+            <table className="w-full text-left border-collapse text-xs font-mono min-w-[700px]">
               <thead>
                 <tr className="border-b border-ledger-border bg-ledger-subpanel text-bone-muted uppercase text-[10px] tracking-wider">
                   <th className="py-2.5 px-4 font-normal">Seq</th>
@@ -309,7 +309,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-ledger-border bg-ledger-panel py-4 text-xs font-mono text-bone-dark">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
           <span>SettleUp Debt Netting Engine</span>
           <span>Integer-Cent Ledger Architecture</span>
         </div>

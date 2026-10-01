@@ -51,7 +51,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md border border-ledger-border bg-ledger-panel p-8 shadow-none">
+    <div className="w-full max-w-md border border-ledger-border bg-ledger-panel p-5 sm:p-8 shadow-none">
       <div className="flex items-center justify-between border-b border-ledger-border pb-4 mb-6">
         <h1 className="font-display text-2xl font-medium tracking-tight text-bone">
           SettleUp
@@ -202,7 +202,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen bg-ledger-canvas text-bone flex items-center justify-center p-6">
+    <main className="min-h-screen bg-ledger-canvas text-bone flex items-center justify-center p-4 sm:p-6">
       <Suspense fallback={<div className="font-mono text-xs text-bone-dark">Loading...</div>}>
         <LoginForm />
       </Suspense>

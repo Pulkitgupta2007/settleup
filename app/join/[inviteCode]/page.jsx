@@ -105,8 +105,8 @@ export default function JoinGroupPage() {
   }, [state.success, state.countdown, state.group, router]);
 
   return (
-    <main className="min-h-screen bg-ledger-canvas text-bone flex items-center justify-center p-6">
-      <div className="w-full max-w-md border border-ledger-border bg-ledger-panel p-8 shadow-none">
+    <main className="min-h-screen bg-ledger-canvas text-bone flex items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-md border border-ledger-border bg-ledger-panel p-5 sm:p-8 shadow-none">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-ledger-border pb-4 mb-6">
           <div className="flex items-baseline gap-2.5">

@@ -308,11 +308,11 @@ export default function NewExpensePage({ params }) {
     <main className="min-h-screen bg-ledger-canvas text-bone flex flex-col justify-between">
       {/* Header */}
       <header className="border-b border-ledger-border bg-ledger-panel">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <Link
               href={`/groups/${id}`}
-              className="text-xs font-mono text-bone-muted hover:text-bone transition-colors"
+              className="text-xs font-mono text-bone-muted hover:text-bone transition-colors shrink-0"
             >
               Back to {group?.name}
             </Link>
@@ -325,8 +325,8 @@ export default function NewExpensePage({ params }) {
       </header>
 
       {/* Main Container */}
-      <div className="max-w-4xl mx-auto px-6 py-8 w-full flex-1">
-        <div className="border border-ledger-border bg-ledger-panel p-6 sm:p-8 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full flex-1">
+        <div className="border border-ledger-border bg-ledger-panel p-4 sm:p-8 space-y-6">
           <div className="border-b border-ledger-border pb-4">
             <h1 className="font-display text-2xl font-medium tracking-tight text-bone mb-1">
               Record Group Expense
@@ -433,11 +433,11 @@ export default function NewExpensePage({ params }) {
                   </p>
                 </div>
 
-                <div className="flex flex-wrap border border-ledger-border bg-ledger-subpanel p-0.5 text-xs font-mono">
+                <div className="grid grid-cols-2 sm:flex border border-ledger-border bg-ledger-subpanel p-0.5 text-xs font-mono w-full sm:w-auto">
                   <button
                     type="button"
                     onClick={() => setSplitMode('EQUAL')}
-                    className={`px-3 py-1 transition-colors ${
+                    className={`px-3 py-1.5 text-center transition-colors ${
                       splitMode === 'EQUAL'
                         ? 'bg-ledger-border text-bone font-medium'
                         : 'text-bone-muted hover:text-bone'
@@ -448,7 +448,7 @@ export default function NewExpensePage({ params }) {
                   <button
                     type="button"
                     onClick={() => setSplitMode('EXACT')}
-                    className={`px-3 py-1 transition-colors ${
+                    className={`px-3 py-1.5 text-center transition-colors ${
                       splitMode === 'EXACT'
                         ? 'bg-ledger-border text-bone font-medium'
                         : 'text-bone-muted hover:text-bone'
@@ -459,7 +459,7 @@ export default function NewExpensePage({ params }) {
                   <button
                     type="button"
                     onClick={() => setSplitMode('PERCENTAGE')}
-                    className={`px-3 py-1 transition-colors ${
+                    className={`px-3 py-1.5 text-center transition-colors ${
                       splitMode === 'PERCENTAGE'
                         ? 'bg-ledger-border text-bone font-medium'
                         : 'text-bone-muted hover:text-bone'
@@ -470,7 +470,7 @@ export default function NewExpensePage({ params }) {
                   <button
                     type="button"
                     onClick={() => setSplitMode('SHARES')}
-                    className={`px-3 py-1 transition-colors ${
+                    className={`px-3 py-1.5 text-center transition-colors ${
                       splitMode === 'SHARES'
                         ? 'bg-ledger-border text-bone font-medium'
                         : 'text-bone-muted hover:text-bone'
@@ -568,12 +568,12 @@ export default function NewExpensePage({ params }) {
                     {members.map((m) => (
                       <div
                         key={m._id}
-                        className="flex items-center justify-between p-2.5 border border-ledger-border bg-ledger-subpanel"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 border border-ledger-border bg-ledger-subpanel gap-2"
                       >
-                        <span className="text-xs font-mono text-bone">
+                        <span className="text-xs font-mono text-bone truncate">
                           {m.name}
                         </span>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                           <span className="text-xs font-mono text-bone-dark">$</span>
                           <input
                             type="number"
@@ -594,7 +594,7 @@ export default function NewExpensePage({ params }) {
               {/* 3. PERCENTAGE SPLIT MODE */}
               {splitMode === 'PERCENTAGE' && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <span className="text-[11px] font-mono text-bone-dark uppercase tracking-wider">
                       Specify percentage for each member:
                     </span>
@@ -622,12 +622,12 @@ export default function NewExpensePage({ params }) {
                       return (
                         <div
                           key={m._id}
-                          className="flex items-center justify-between p-2.5 border border-ledger-border bg-ledger-subpanel"
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 border border-ledger-border bg-ledger-subpanel gap-2"
                         >
-                          <span className="text-xs font-mono text-bone">
+                          <span className="text-xs font-mono text-bone truncate">
                             {m.name}
                           </span>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
                             {share && (
                               <span className="text-xs font-mono text-credit font-semibold">
                                 {formatCents(share.amount, currency)}
@@ -669,7 +669,7 @@ export default function NewExpensePage({ params }) {
               {/* 4. SHARES SPLIT MODE */}
               {splitMode === 'SHARES' && (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <span className="text-[11px] font-mono text-bone-dark uppercase tracking-wider">
                       Specify relative shares (e.g. 2 for couple, 1 for single):
                     </span>
@@ -693,12 +693,12 @@ export default function NewExpensePage({ params }) {
                       return (
                         <div
                           key={m._id}
-                          className="flex items-center justify-between p-2.5 border border-ledger-border bg-ledger-subpanel"
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-2.5 border border-ledger-border bg-ledger-subpanel gap-2"
                         >
-                          <span className="text-xs font-mono text-bone">
+                          <span className="text-xs font-mono text-bone truncate">
                             {m.name}
                           </span>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
                             {share && (
                               <div className="text-right">
                                 <span className="text-xs font-mono text-bone-muted mr-2">
@@ -743,10 +743,10 @@ export default function NewExpensePage({ params }) {
             </div>
 
             {/* Actions */}
-            <div className="pt-6 border-t border-ledger-border flex items-center justify-between">
+            <div className="pt-6 border-t border-ledger-border flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <Link
                 href={`/groups/${id}`}
-                className="py-2 px-4 text-xs font-mono border border-ledger-border bg-ledger-subpanel hover:border-bone-dark text-bone-muted hover:text-bone transition-colors"
+                className="py-2.5 px-4 text-xs font-mono border border-ledger-border bg-ledger-subpanel hover:border-bone-dark text-bone-muted hover:text-bone text-center transition-colors"
               >
                 Cancel
               </Link>
@@ -760,7 +760,7 @@ export default function NewExpensePage({ params }) {
                   (splitMode === 'PERCENTAGE' && Math.abs(percentageDifference) >= 0.01) ||
                   (splitMode === 'SHARES' && sharesSum <= 0)
                 }
-                className="py-2.5 px-6 text-xs font-mono tracking-tight bg-slate-900 hover:bg-slate-800 text-white font-semibold transition-colors disabled:opacity-40"
+                className="py-2.5 px-6 text-xs font-mono tracking-tight bg-slate-900 hover:bg-slate-800 text-white font-semibold text-center transition-colors disabled:opacity-40"
               >
                 {submitting ? 'Appending to Ledger...' : 'Record Expense'}
               </button>
@@ -771,7 +771,7 @@ export default function NewExpensePage({ params }) {
 
       {/* Footer */}
       <footer className="border-t border-ledger-border bg-ledger-panel py-4 text-xs font-mono text-bone-dark">
-        <div className="max-w-4xl mx-auto px-6 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
           <span>SettleUp Expense Entry</span>
           <span>Append-Only Journal Log</span>
         </div>

@@ -113,7 +113,7 @@ export default function DashboardPage() {
 
   if (status === 'loading' || (status === 'authenticated' && loading && !groups.length && !error)) {
     return (
-      <main className="min-h-screen bg-ledger-canvas text-bone flex items-center justify-center p-6">
+      <main className="min-h-screen bg-ledger-canvas text-bone flex items-center justify-center p-4 sm:p-6">
         <div className="font-mono text-xs text-bone-muted">
           Loading ledger accounts...
         </div>
@@ -125,7 +125,7 @@ export default function DashboardPage() {
     <main className="min-h-screen bg-ledger-canvas text-bone flex flex-col justify-between">
       {/* Masthead */}
       <header className="border-b border-ledger-border bg-ledger-panel">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-baseline gap-3">
             <h1 className="font-display text-2xl font-medium tracking-tight text-bone">
               SettleUp
@@ -135,14 +135,14 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-mono">
-            <span className="text-bone-muted hidden sm:inline">
+          <div className="flex items-center justify-between sm:justify-end gap-3 text-xs font-mono w-full sm:w-auto">
+            <span className="text-bone-muted truncate max-w-[200px] sm:max-w-none">
               Account: <strong className="text-bone font-medium">{session?.user?.name || session?.user?.email}</strong>
             </span>
             <button
               onClick={() => signOut({ callbackUrl: '/login' })}
               type="button"
-              className="py-1 px-3 border border-ledger-border bg-ledger-subpanel hover:border-bone-dark text-bone-muted hover:text-bone transition-colors"
+              className="py-1.5 px-3 border border-ledger-border bg-ledger-subpanel hover:border-bone-dark text-bone-muted hover:text-bone transition-colors shrink-0"
             >
               Sign out
             </button>
@@ -151,17 +151,17 @@ export default function DashboardPage() {
       </header>
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-6 py-8 w-full space-y-8 flex-1">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full space-y-6 sm:space-y-8 flex-1">
         {error && <ErrorCallout error={{ message: error }} onDismiss={() => setError(null)} />}
 
         {/* Global Net Balance Statement Bar */}
         <section className="border border-ledger-border bg-ledger-panel divide-y sm:divide-y-0 sm:divide-x divide-ledger-border grid grid-cols-1 sm:grid-cols-3">
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <span className="text-[11px] font-sans text-bone-muted block mb-1">
               Net balance across all groups
             </span>
             <div
-              className={`font-display text-3xl font-medium tabular-nums ${
+              className={`font-display text-2xl sm:text-3xl font-medium tabular-nums ${
                 netPosition > 0 ? 'text-credit' : netPosition < 0 ? 'text-debt' : 'text-bone'
               }`}
             >
@@ -172,11 +172,11 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <span className="text-[11px] font-sans text-bone-muted block mb-1">
               Total receivables (you are owed)
             </span>
-            <div className="font-display text-3xl font-medium text-credit tabular-nums">
+            <div className="font-display text-2xl sm:text-3xl font-medium text-credit tabular-nums">
               +{formatCents(totalCredited)}
             </div>
             <span className="text-xs font-mono text-bone-dark block mt-1">
@@ -184,11 +184,11 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <span className="text-[11px] font-sans text-bone-muted block mb-1">
               Total payables (you owe)
             </span>
-            <div className="font-display text-3xl font-medium text-debt tabular-nums">
+            <div className="font-display text-2xl sm:text-3xl font-medium text-debt tabular-nums">
               -{formatCents(totalDebited)}
             </div>
             <span className="text-xs font-mono text-bone-dark block mt-1">
@@ -206,7 +206,7 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {groups.length > 0 && (
               <button
                 onClick={handleAddExpenseClick}
@@ -311,8 +311,8 @@ export default function DashboardPage() {
                   )}
                 </div>
 
-                <div className="pt-3 border-t border-ledger-border flex items-center justify-between">
-                  <div>
+                <div className="pt-3 border-t border-ledger-border flex items-center justify-between gap-2">
+                  <div className="min-w-0">
                     <span className="text-[10px] font-sans text-bone-dark block">
                       Your net standing
                     </span>
@@ -329,17 +329,17 @@ export default function DashboardPage() {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <Link
                       href={`/groups/${group._id}/expenses/new`}
-                      className="py-1 px-2.5 text-xs font-mono bg-slate-900 hover:bg-slate-800 text-white font-semibold transition-colors"
+                      className="py-1.5 px-2.5 text-xs font-mono bg-slate-900 hover:bg-slate-800 text-white font-semibold transition-colors"
                       title={`Add an expense to ${group.name}`}
                     >
                       Expense
                     </Link>
                     <Link
                       href={`/groups/${group._id}`}
-                      className="py-1 px-2.5 text-xs font-mono border border-ledger-border bg-ledger-subpanel hover:bg-ledger-highlight text-bone transition-colors"
+                      className="py-1.5 px-2.5 text-xs font-mono border border-ledger-border bg-ledger-subpanel hover:bg-ledger-highlight text-bone transition-colors"
                       title="Open group ledger and graph"
                     >
                       Open group
@@ -417,7 +417,7 @@ export default function DashboardPage() {
 
       {/* Footer */}
       <footer className="border-t border-ledger-border bg-ledger-panel py-4 text-xs font-mono text-bone-dark">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
           <span>SettleUp Portfolio Dashboard</span>
           <span>Double-Entry Database Journal</span>
         </div>

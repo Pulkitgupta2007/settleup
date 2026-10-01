@@ -49,6 +49,10 @@ export default function DebtGraph({
   const [viewMode, setViewMode] = useState('simplified'); // 'raw' | 'simplified'
   const [isPlaying, setIsPlaying] = useState(false);
   const [hoveredNode, setHoveredNode] = useState(null);
+  const [selectedNode, setSelectedNode] = useState(null);
+
+  // Active node resolved from either mobile touch tap or desktop hover
+  const activeNode = selectedNode || hoveredNode;
 
   // Auto-play loop toggle
   useEffect(() => {
@@ -74,24 +78,24 @@ export default function DebtGraph({
   // Active edges based on current viewMode
   const activeDebts = viewMode === 'raw' ? rawDebts : settlementDebts;
 
-  // Active debts connected to hovered node (e.g. Bob)
+  // Active debts connected to active node (e.g. Bob)
   const hoverDetails = useMemo(() => {
-    if (!hoveredNode) return null;
-    const incoming = activeDebts.filter(d => d.to === hoveredNode);
-    const outgoing = activeDebts.filter(d => d.from === hoveredNode);
+    if (!activeNode) return null;
+    const incoming = activeDebts.filter(d => d.to === activeNode);
+    const outgoing = activeDebts.filter(d => d.from === activeNode);
     const connectedNames = new Set([
       ...incoming.map(d => d.from),
       ...outgoing.map(d => d.to),
     ]);
-    const balance = netBalances.get(hoveredNode) || 0;
+    const balance = netBalances.get(activeNode) || 0;
     return {
-      name: hoveredNode,
+      name: activeNode,
       balance,
       incoming,
       outgoing,
       connectedNames,
     };
-  }, [hoveredNode, activeDebts, netBalances]);
+  }, [activeNode, activeDebts, netBalances]);
 
   // Calculate layout coordinates (polar arrangement around center)
   const layout = useMemo(() => {
@@ -141,33 +145,33 @@ export default function DebtGraph({
     : 0;
 
   return (
-    <div className="w-full border border-ledger-border bg-ledger-panel text-bone p-6 font-sans">
+    <div className="w-full border border-ledger-border bg-ledger-panel text-bone p-3.5 sm:p-6 font-sans">
       {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-5 mb-5 border-b border-ledger-border gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 sm:pb-5 mb-4 sm:mb-5 border-b border-ledger-border gap-3 sm:gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-credit inline-block" />
-            <h3 className="font-display text-xl tracking-tight text-bone font-medium">
+            <span className="w-2.5 h-2.5 rounded-full bg-credit inline-block shrink-0" />
+            <h3 className="font-display text-lg sm:text-xl tracking-tight text-bone font-medium">
               Debt Settlement Topology
             </h3>
           </div>
-          <p className="text-xs text-bone-muted font-mono">
+          <p className="text-xs text-bone-muted font-mono leading-relaxed">
             {viewMode === 'raw'
-              ? `Raw obligations: ${rawDebts.length} individual transfers (${formatCents(rawTotal, currency)} total volume)`
+              ? `Raw obligations: ${rawDebts.length} transfers (${formatCents(rawTotal, currency)} total volume)`
               : `Netted plan: ${settlementDebts.length} bilateral transfers (${formatCents(settledTotal, currency)} total volume)`}
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-stretch sm:self-auto">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
           {/* View mode toggle button */}
-          <div className="flex border border-ledger-border bg-ledger-subpanel p-0.5 text-xs font-mono">
+          <div className="flex flex-1 sm:flex-initial border border-ledger-border bg-ledger-subpanel p-0.5 text-xs font-mono">
             <button
               onClick={() => {
                 setViewMode('raw');
                 setIsPlaying(false);
               }}
               type="button"
-              className={`px-3 py-1.5 transition-colors ${
+              className={`flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 transition-colors whitespace-nowrap ${
                 viewMode === 'raw'
                   ? 'bg-white text-bone font-semibold shadow-sm'
                   : 'text-bone-muted hover:text-bone'
@@ -181,7 +185,7 @@ export default function DebtGraph({
                 setIsPlaying(false);
               }}
               type="button"
-              className={`px-3 py-1.5 transition-colors ${
+              className={`flex-1 sm:flex-initial px-2.5 sm:px-3 py-1.5 transition-colors whitespace-nowrap ${
                 viewMode === 'simplified'
                   ? 'bg-credit text-white font-semibold shadow-sm'
                   : 'text-bone-muted hover:text-bone'
@@ -195,7 +199,7 @@ export default function DebtGraph({
           <button
             onClick={() => setIsPlaying(!isPlaying)}
             type="button"
-            className={`px-3 py-1.5 text-xs font-mono border transition-all ${
+            className={`w-full sm:w-auto px-3 py-1.5 text-xs font-mono border transition-all text-center ${
               isPlaying
                 ? 'border-credit bg-credit/10 text-credit font-medium'
                 : 'border-ledger-border bg-white text-bone-muted hover:text-bone'
@@ -207,52 +211,61 @@ export default function DebtGraph({
       </div>
 
       {/* Metric Ledger Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 border border-ledger-border bg-ledger-subpanel divide-y sm:divide-y-0 sm:divide-x divide-ledger-border mb-5">
-        <div className="p-3">
-          <span className="text-[11px] font-sans text-bone-muted block mb-0.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 border border-ledger-border bg-ledger-subpanel divide-y sm:divide-y-0 sm:divide-x divide-ledger-border mb-4 sm:mb-5">
+        <div className="p-2.5 sm:p-3">
+          <span className="text-[10px] sm:text-[11px] font-sans text-bone-muted block mb-0.5">
             Transfers required
           </span>
-          <span className="font-mono text-sm text-bone">
+          <span className="font-mono text-xs sm:text-sm text-bone">
             <strong className="text-credit font-semibold">{settlementDebts.length}</strong>
-            <span className="text-bone-dark text-xs ml-1.5">(was {rawDebts.length})</span>
+            <span className="text-bone-dark text-[10px] sm:text-xs ml-1">(was {rawDebts.length})</span>
           </span>
         </div>
-        <div className="p-3">
-          <span className="text-[11px] font-sans text-bone-muted block mb-0.5">
+        <div className="p-2.5 sm:p-3">
+          <span className="text-[10px] sm:text-[11px] font-sans text-bone-muted block mb-0.5">
             Transfer reduction
           </span>
-          <span className="font-mono text-sm text-credit font-semibold">
+          <span className="font-mono text-xs sm:text-sm text-credit font-semibold">
             -{txReduction}%
           </span>
         </div>
-        <div className="p-3">
-          <span className="text-[11px] font-sans text-bone-muted block mb-0.5">
-            Total capital in motion
+        <div className="p-2.5 sm:p-3">
+          <span className="text-[10px] sm:text-[11px] font-sans text-bone-muted block mb-0.5">
+            Capital in motion
           </span>
-          <span className="font-mono text-sm text-bone">
+          <span className="font-mono text-xs sm:text-sm text-bone">
             <strong className="text-credit font-semibold">{formatCents(settledTotal, currency)}</strong>
-            <span className="text-bone-dark text-xs ml-1.5">(was {formatCents(rawTotal, currency)})</span>
+            <span className="text-bone-dark text-[10px] sm:text-xs ml-1 block sm:inline">(was {formatCents(rawTotal, currency)})</span>
           </span>
         </div>
-        <div className="p-3">
-          <span className="text-[11px] font-sans text-bone-muted block mb-0.5">
+        <div className="p-2.5 sm:p-3">
+          <span className="text-[10px] sm:text-[11px] font-sans text-bone-muted block mb-0.5">
             Capital conserved
           </span>
-          <span className="font-mono text-sm text-credit font-semibold">
+          <span className="font-mono text-xs sm:text-sm text-credit font-semibold">
             -{cashReduction}% cash drag
           </span>
         </div>
       </div>
 
       {/* SVG Canvas Container */}
-      <div className="relative border border-ledger-border bg-white overflow-hidden flex items-center justify-center">
-        {/* Floating Hover Inspector Card */}
+      <div
+        onClick={() => {
+          setSelectedNode(null);
+          setHoveredNode(null);
+        }}
+        className="relative border border-ledger-border bg-white overflow-hidden flex items-center justify-center cursor-default"
+      >
+        {/* Floating Inspector Card with Touch Dismissal & Mobile Adaptation */}
         {hoverDetails && (
-          <div className="absolute top-4 right-4 z-20 w-64 bg-white/95 backdrop-blur border border-ledger-border p-3.5 shadow-md text-xs font-sans pointer-events-none transition-all">
-            <div className="flex items-center justify-between border-b border-ledger-border pb-2 mb-2">
-              <div className="flex items-center gap-2">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="absolute top-2 right-2 left-2 sm:left-auto sm:top-4 sm:right-4 z-20 sm:w-64 max-w-sm bg-white/95 backdrop-blur border border-ledger-border p-3 sm:p-3.5 shadow-lg text-xs font-sans pointer-events-auto transition-all max-h-56 overflow-y-auto"
+          >
+            <div className="flex items-center justify-between border-b border-ledger-border pb-2 mb-2 gap-2">
+              <div className="flex items-center gap-2 truncate">
                 <span
-                  className={`w-2.5 h-2.5 rounded-full ${
+                  className={`w-2.5 h-2.5 rounded-full shrink-0 ${
                     hoverDetails.balance > 0
                       ? 'bg-credit'
                       : hoverDetails.balance < 0
@@ -260,19 +273,32 @@ export default function DebtGraph({
                       : 'bg-brass'
                   }`}
                 />
-                <span className="font-semibold text-bone text-sm">{hoverDetails.name}</span>
+                <span className="font-semibold text-bone text-sm truncate">{hoverDetails.name}</span>
               </div>
-              <span
-                className={`font-mono text-xs font-bold ${
-                  hoverDetails.balance > 0
-                    ? 'text-credit'
-                    : hoverDetails.balance < 0
-                    ? 'text-debt'
-                    : 'text-bone-muted'
-                }`}
-              >
-                {formatSignedCents(hoverDetails.balance, currency)}
-              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span
+                  className={`font-mono text-xs font-bold tabular-nums ${
+                    hoverDetails.balance > 0
+                      ? 'text-credit'
+                      : hoverDetails.balance < 0
+                      ? 'text-debt'
+                      : 'text-bone-muted'
+                  }`}
+                >
+                  {formatSignedCents(hoverDetails.balance, currency)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedNode(null);
+                    setHoveredNode(null);
+                  }}
+                  className="w-5 h-5 flex items-center justify-center text-bone-muted hover:text-bone text-xs border border-ledger-border bg-ledger-subpanel hover:bg-ledger-canvas"
+                  aria-label="Close details"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div className="space-y-2 text-[11px] font-mono">
@@ -283,8 +309,8 @@ export default function DebtGraph({
                   </span>
                   {hoverDetails.incoming.map((item, i) => (
                     <div key={i} className="flex justify-between text-bone-muted py-0.5">
-                      <span className="text-bone font-medium">{item.from}</span>
-                      <span className="text-credit font-semibold">+{formatCents(item.amount, currency)}</span>
+                      <span className="text-bone font-medium truncate mr-2">{item.from}</span>
+                      <span className="text-credit font-semibold shrink-0">+{formatCents(item.amount, currency)}</span>
                     </div>
                   ))}
                 </div>
@@ -297,8 +323,8 @@ export default function DebtGraph({
                   </span>
                   {hoverDetails.outgoing.map((item, i) => (
                     <div key={i} className="flex justify-between text-bone-muted py-0.5">
-                      <span className="text-bone font-medium">{item.to}</span>
-                      <span className="text-debt font-semibold">-{formatCents(item.amount, currency)}</span>
+                      <span className="text-bone font-medium truncate mr-2">{item.to}</span>
+                      <span className="text-debt font-semibold shrink-0">-{formatCents(item.amount, currency)}</span>
                     </div>
                   ))}
                 </div>
@@ -396,22 +422,22 @@ export default function DebtGraph({
                 GRAPH_CONFIG.minStrokeWidth +
                 GRAPH_CONFIG.maxStrokeWidthDelta * (debt.amount / maxDebtAmount);
 
-              // Directed highlighting relative to hovered node
-              const isIncomingToHovered = hoveredNode && debt.to === hoveredNode;
-              const isOutgoingFromHovered = hoveredNode && debt.from === hoveredNode;
+              // Directed highlighting relative to active node
+              const isIncomingToHovered = activeNode && debt.to === activeNode;
+              const isOutgoingFromHovered = activeNode && debt.from === activeNode;
               const isConnectedToHovered = isIncomingToHovered || isOutgoingFromHovered;
 
               let strokeColor;
               let markerId;
               let edgeOpacity;
 
-              if (hoveredNode) {
+              if (activeNode) {
                 if (isIncomingToHovered) {
-                  strokeColor = '#059669'; // Emerald: money arriving to hovered node
+                  strokeColor = '#059669'; // Emerald: money arriving to active node
                   markerId = 'url(#arrow-emerald)';
                   edgeOpacity = 1;
                 } else if (isOutgoingFromHovered) {
-                  strokeColor = '#E11D48'; // Crimson: money leaving hovered node
+                  strokeColor = '#E11D48'; // Crimson: money leaving active node
                   markerId = 'url(#arrow-crimson)';
                   edgeOpacity = 1;
                 } else {
@@ -487,9 +513,9 @@ export default function DebtGraph({
                 badgeColor = 'text-debt';
               }
 
-              const isHovered = hoveredNode === node.name;
+              const isHovered = activeNode === node.name;
               const isConnectedPeer = hoverDetails?.connectedNames.has(node.name);
-              const nodeOpacity = hoveredNode
+              const nodeOpacity = activeNode
                 ? isHovered || isConnectedPeer
                   ? 1
                   : 0.22
@@ -501,8 +527,12 @@ export default function DebtGraph({
                 <g
                   key={node.name}
                   transform={`translate(${node.x}, ${node.y})`}
-                  className="graph-node"
+                  className="graph-node cursor-pointer touch-manipulation"
                   style={{ opacity: nodeOpacity }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedNode(prev => (prev === node.name ? null : node.name));
+                  }}
                   onMouseEnter={() => setHoveredNode(node.name)}
                   onMouseLeave={() => setHoveredNode(null)}
                 >
@@ -565,17 +595,17 @@ export default function DebtGraph({
         </svg>
 
         {/* Legend */}
-        <div className="absolute bottom-3 left-3 flex items-center gap-4 bg-white/95 border border-ledger-border px-3 py-1.5 text-[10px] font-mono text-bone-muted backdrop-blur-sm shadow-sm">
+        <div className="absolute bottom-2 left-2 right-2 sm:right-auto sm:bottom-3 sm:left-3 flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-4 bg-white/95 border border-ledger-border px-2.5 sm:px-3 py-1.5 text-[9px] sm:text-[10px] font-mono text-bone-muted backdrop-blur-sm shadow-sm pointer-events-none">
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full border border-credit bg-credit/20" />
+            <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full border border-credit bg-credit/20 shrink-0" />
             <span>Creditor (Receives)</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full border border-debt bg-debt/20" />
+            <span className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full border border-debt bg-debt/20 shrink-0" />
             <span>Debtor (Pays)</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 bg-credit" />
+          <div className="hidden xs:flex sm:flex items-center gap-1.5">
+            <span className="w-2.5 sm:w-3 h-0.5 bg-credit shrink-0" />
             <span>Thickness scales with amount</span>
           </div>
         </div>

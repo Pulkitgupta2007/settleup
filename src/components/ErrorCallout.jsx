@@ -57,11 +57,11 @@ export default function ErrorCallout({
   return (
     <div
       role="alert"
-      className={`relative my-4 rounded-none border-l-4 border ${containerBg} p-4 font-sans shadow-none`}
+      className={`relative my-4 rounded-none border-l-4 border ${containerBg} p-3.5 sm:p-4 font-sans shadow-none`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1.5 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span
               className={`inline-block px-1.5 py-0.5 text-[10px] font-mono tracking-wider uppercase border ${badgeColor}`}
             >

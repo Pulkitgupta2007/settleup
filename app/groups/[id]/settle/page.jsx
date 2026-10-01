@@ -90,11 +90,11 @@ export default function SettleGroupPage({ params }) {
     <main className="min-h-screen bg-ledger-canvas text-bone flex flex-col justify-between">
       {/* Header */}
       <header className="border-b border-ledger-border bg-ledger-panel">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <Link
               href={`/groups/${id}`}
-              className="text-xs font-mono text-bone-muted hover:text-bone transition-colors"
+              className="text-xs font-mono text-bone-muted hover:text-bone transition-colors shrink-0"
             >
               Back to {group?.name}
             </Link>
@@ -107,18 +107,18 @@ export default function SettleGroupPage({ params }) {
       </header>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8 w-full flex-1 space-y-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full flex-1 space-y-6">
         {error && <ErrorCallout error={{ message: error }} onDismiss={() => setError(null)} />}
 
         {settlementSuccess ? (
           /* Success Screen */
-          <div className="border border-credit/40 bg-ledger-panel p-8 space-y-6 text-center">
+          <div className="border border-credit/40 bg-ledger-panel p-4 sm:p-8 space-y-6 text-center">
             <div className="w-10 h-10 rounded-full border border-credit/50 bg-credit/10 text-credit flex items-center justify-center mx-auto text-base font-semibold">
               ✓
             </div>
 
             <div className="space-y-2">
-              <h2 className="font-display text-2xl font-medium tracking-tight text-bone">
+              <h2 className="font-display text-xl sm:text-2xl font-medium tracking-tight text-bone">
                 Settlement committed to ledger
               </h2>
               <p className="text-xs text-bone-muted font-sans max-w-lg mx-auto">
@@ -161,7 +161,7 @@ export default function SettleGroupPage({ params }) {
           </div>
         ) : isFullySettled || settlementDebts.length === 0 ? (
           /* Already Settled State */
-          <div className="border border-ledger-border bg-ledger-panel p-8 text-center space-y-4">
+          <div className="border border-ledger-border bg-ledger-panel p-6 sm:p-8 text-center space-y-4">
             <div className="w-10 h-10 rounded-full border border-credit/40 bg-credit/10 text-credit flex items-center justify-center mx-auto text-sm font-mono">
               $0
             </div>
@@ -182,9 +182,9 @@ export default function SettleGroupPage({ params }) {
           </div>
         ) : (
           /* Settlement Confirmation & Plan */
-          <div className="border border-ledger-border bg-ledger-panel p-6 sm:p-8 space-y-6">
+          <div className="border border-ledger-border bg-ledger-panel p-4 sm:p-8 space-y-6">
             <div className="border-b border-ledger-border pb-4">
-              <h1 className="font-display text-2xl font-medium tracking-tight text-bone mb-1">
+              <h1 className="font-display text-xl sm:text-2xl font-medium tracking-tight text-bone mb-1">
                 Execute Minimal Settlement Plan
               </h1>
               <p className="text-xs text-bone-muted font-sans">
@@ -194,35 +194,35 @@ export default function SettleGroupPage({ params }) {
 
             {/* Algorithmic Efficiency Metrics */}
             <div className="grid grid-cols-2 sm:grid-cols-4 border border-ledger-border bg-ledger-subpanel divide-y sm:divide-y-0 sm:divide-x divide-ledger-border">
-              <div className="p-3">
-                <span className="text-[11px] font-sans text-bone-muted block mb-0.5">
+              <div className="p-2.5 sm:p-3">
+                <span className="text-[10px] sm:text-[11px] font-sans text-bone-muted block mb-0.5">
                   Raw transfers
                 </span>
-                <span className="font-mono text-base text-bone">
+                <span className="font-mono text-xs sm:text-base text-bone">
                   {rawDebts.length}
                 </span>
               </div>
-              <div className="p-3">
-                <span className="text-[11px] font-sans text-bone-muted block mb-0.5">
+              <div className="p-2.5 sm:p-3">
+                <span className="text-[10px] sm:text-[11px] font-sans text-bone-muted block mb-0.5">
                   Settlement plan
                 </span>
-                <span className="font-mono text-base text-credit font-semibold">
+                <span className="font-mono text-xs sm:text-base text-credit font-semibold">
                   {settlementDebts.length} transfers
                 </span>
               </div>
-              <div className="p-3">
-                <span className="text-[11px] font-sans text-bone-muted block mb-0.5">
+              <div className="p-2.5 sm:p-3">
+                <span className="text-[10px] sm:text-[11px] font-sans text-bone-muted block mb-0.5">
                   Raw cash volume
                 </span>
-                <span className="font-mono text-base text-bone">
+                <span className="font-mono text-xs sm:text-base text-bone">
                   {formatCents(rawTotal, group?.baseCurrency)}
                 </span>
               </div>
-              <div className="p-3">
-                <span className="text-[11px] font-sans text-bone-muted block mb-0.5">
+              <div className="p-2.5 sm:p-3">
+                <span className="text-[10px] sm:text-[11px] font-sans text-bone-muted block mb-0.5">
                   Net settled volume
                 </span>
-                <span className="font-mono text-base text-credit font-semibold">
+                <span className="font-mono text-xs sm:text-base text-credit font-semibold">
                   {formatCents(settledTotal, group?.baseCurrency)}
                 </span>
               </div>
@@ -238,20 +238,20 @@ export default function SettleGroupPage({ params }) {
                 {settlementDebts.map((tx, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-3 border border-ledger-border bg-ledger-subpanel font-mono text-xs"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border border-ledger-border bg-ledger-subpanel font-mono text-xs gap-2"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="w-5 h-5 rounded-full border border-ledger-border bg-ledger-panel text-bone-muted flex items-center justify-center text-[10px] font-semibold">
+                    <div className="flex items-center gap-3 truncate">
+                      <span className="w-5 h-5 rounded-full border border-ledger-border bg-ledger-panel text-bone-muted flex items-center justify-center text-[10px] font-semibold shrink-0">
                         {idx + 1}
                       </span>
-                      <div className="flex items-center gap-2">
-                        <strong className="text-debt-light font-medium">{tx.from}</strong>
-                        <span className="text-bone-dark font-sans">pays</span>
-                        <strong className="text-credit font-medium">{tx.to}</strong>
+                      <div className="flex items-center gap-2 truncate">
+                        <strong className="text-debt-light font-medium truncate">{tx.from}</strong>
+                        <span className="text-bone-dark font-sans shrink-0">pays</span>
+                        <strong className="text-credit font-medium truncate">{tx.to}</strong>
                       </div>
                     </div>
 
-                    <span className="font-mono text-sm text-bone font-semibold tabular-nums">
+                    <span className="font-mono text-sm text-bone font-semibold tabular-nums text-right sm:text-right shrink-0">
                       {formatCents(tx.amount, group?.baseCurrency)}
                     </span>
                   </div>
@@ -284,10 +284,10 @@ export default function SettleGroupPage({ params }) {
             </div>
 
             {/* Action Bar */}
-            <div className="pt-4 border-t border-ledger-border flex items-center justify-between">
+            <div className="pt-4 border-t border-ledger-border flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <Link
                 href={`/groups/${id}`}
-                className="py-2 px-4 text-xs font-mono border border-ledger-border bg-ledger-subpanel hover:border-bone-dark text-bone-muted hover:text-bone transition-colors"
+                className="py-2.5 px-4 text-xs font-mono border border-ledger-border bg-ledger-subpanel hover:border-bone-dark text-bone-muted hover:text-bone text-center transition-colors"
               >
                 Cancel
               </Link>
@@ -296,7 +296,7 @@ export default function SettleGroupPage({ params }) {
                 type="button"
                 onClick={handleExecuteSettlement}
                 disabled={executing}
-                className="py-2.5 px-6 text-xs font-mono bg-credit hover:bg-credit/90 text-white font-semibold transition-colors disabled:opacity-40"
+                className="py-2.5 px-6 text-xs font-mono bg-credit hover:bg-credit/90 text-white font-semibold text-center transition-colors disabled:opacity-40"
               >
                 {executing ? 'Committing transaction...' : 'Commit settlement plan'}
               </button>
@@ -307,7 +307,7 @@ export default function SettleGroupPage({ params }) {
 
       {/* Footer */}
       <footer className="border-t border-ledger-border bg-ledger-panel py-4 text-xs font-mono text-bone-dark">
-        <div className="max-w-4xl mx-auto px-6 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
           <span>Settlement Engine</span>
           <span>Greedy Graph Netting</span>
         </div>

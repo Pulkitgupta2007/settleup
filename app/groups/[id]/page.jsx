@@ -323,21 +323,21 @@ export default function GroupDetailPage({ params }) {
     <main className="min-h-screen bg-ledger-canvas text-bone flex flex-col justify-between">
       {/* Top Navigation */}
       <header className="border-b border-ledger-border bg-ledger-panel sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <Link
               href="/dashboard"
-              className="text-xs font-mono text-bone-muted hover:text-bone transition-colors"
+              className="text-xs font-mono text-bone-muted hover:text-bone transition-colors shrink-0"
             >
               Dashboard
             </Link>
             <span className="text-bone-dark">/</span>
-            <h1 className="font-display text-base font-medium tracking-tight text-bone">
+            <h1 className="font-display text-base font-medium tracking-tight text-bone truncate">
               {group?.name}
             </h1>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleExportCsv}
@@ -370,7 +370,7 @@ export default function GroupDetailPage({ params }) {
       </header>
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-6 py-8 w-full space-y-8 flex-1">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full space-y-6 sm:space-y-8 flex-1">
         {error && <ErrorCallout error={{ message: error }} onDismiss={() => setError(null)} />}
 
         {actionSuccess && (
@@ -381,11 +381,11 @@ export default function GroupDetailPage({ params }) {
         )}
 
         {/* Group Information Bar */}
-        <section className="border border-ledger-border bg-ledger-panel p-6">
+        <section className="border border-ledger-border bg-ledger-panel p-4 sm:p-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-ledger-border">
             <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h2 className="font-display text-2xl font-medium tracking-tight text-bone">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
+                <h2 className="font-display text-xl sm:text-2xl font-medium tracking-tight text-bone">
                   {group?.name}
                 </h2>
                 <span className="text-[10px] font-mono uppercase px-2 py-0.5 border border-ledger-border bg-ledger-subpanel text-bone">
@@ -406,11 +406,11 @@ export default function GroupDetailPage({ params }) {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={handleOpenInviteModal}
                 type="button"
-                className="py-1 px-3 text-xs font-mono border border-ledger-border bg-ledger-subpanel hover:border-bone-dark text-bone transition-colors"
+                className="py-1.5 px-3 text-xs font-mono border border-ledger-border bg-ledger-subpanel hover:border-bone-dark text-bone transition-colors"
                 title="Generate and copy shareable group invite link"
               >
                 Invite link
@@ -418,14 +418,14 @@ export default function GroupDetailPage({ params }) {
               <button
                 onClick={handleOpenAddMember}
                 type="button"
-                className="py-1 px-3 text-xs font-mono border border-ledger-border bg-ledger-subpanel hover:border-bone-dark text-bone transition-colors"
+                className="py-1.5 px-3 text-xs font-mono border border-ledger-border bg-ledger-subpanel hover:border-bone-dark text-bone transition-colors"
               >
                 Add member
               </button>
               <button
                 onClick={() => setShowConstraintModal(true)}
                 type="button"
-                className="py-1 px-3 text-xs font-mono border border-ledger-border bg-ledger-subpanel hover:border-bone-dark text-bone transition-colors"
+                className="py-1.5 px-3 text-xs font-mono border border-ledger-border bg-ledger-subpanel hover:border-bone-dark text-bone transition-colors"
               >
                 Constraints ({group?.constraints?.length || 0})
               </button>
@@ -474,7 +474,7 @@ export default function GroupDetailPage({ params }) {
 
         {/* Add Member Modal / Drawer */}
         {showAddMember && (
-          <div className="border border-ledger-border bg-ledger-panel p-6 space-y-5">
+          <div className="border border-ledger-border bg-ledger-panel p-4 sm:p-6 space-y-4 sm:space-y-5">
             <div className="flex items-center justify-between border-b border-ledger-border pb-3">
               <h3 className="font-display text-base font-medium text-bone">
                 Add Participant to Group
@@ -487,7 +487,7 @@ export default function GroupDetailPage({ params }) {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {/* Option A: Select from existing users */}
               <form onSubmit={handleAddExistingMember} className="space-y-3">
                 <h4 className="text-xs font-mono uppercase tracking-wider text-bone-dark">
@@ -522,7 +522,7 @@ export default function GroupDetailPage({ params }) {
                 <h4 className="text-xs font-mono uppercase tracking-wider text-bone-dark">
                   Or Create New Member
                 </h4>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <input
                     type="text"
                     value={newMemberName}
@@ -553,7 +553,7 @@ export default function GroupDetailPage({ params }) {
 
         {/* Constraint Management Drawer */}
         {showConstraintModal && (
-          <div className="border border-ledger-border bg-ledger-panel p-6 space-y-4">
+          <div className="border border-ledger-border bg-ledger-panel p-4 sm:p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-ledger-border pb-3">
               <div>
                 <h3 className="font-display text-base font-medium text-bone">
@@ -653,7 +653,7 @@ export default function GroupDetailPage({ params }) {
 
         {/* Shareable Invite Modal / Panel */}
         {showInviteModal && (
-          <div className="border border-ledger-border bg-ledger-panel p-6 space-y-5">
+          <div className="border border-ledger-border bg-ledger-panel p-4 sm:p-6 space-y-4 sm:space-y-5">
             <div className="flex items-center justify-between border-b border-ledger-border pb-3">
               <div>
                 <div className="flex items-center gap-2">
@@ -685,7 +685,7 @@ export default function GroupDetailPage({ params }) {
                   <label className="block text-[10px] font-mono uppercase tracking-wider text-bone-dark mb-1">
                     Invite URL (7-Day Sliding Expiry)
                   </label>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <input
                       type="text"
                       readOnly
@@ -695,7 +695,7 @@ export default function GroupDetailPage({ params }) {
                     <button
                       type="button"
                       onClick={handleCopyInvite}
-                      className="py-2 px-4 text-xs font-mono bg-slate-900 hover:bg-slate-800 text-white font-semibold transition-colors flex items-center gap-1.5"
+                      className="py-2 px-4 text-xs font-mono bg-slate-900 hover:bg-slate-800 text-white font-semibold transition-colors flex items-center justify-center gap-1.5 shrink-0"
                     >
                       <span>{copiedInvite ? '✓' : '📋'}</span>
                       <span>{copiedInvite ? 'Copied!' : 'Copy Link'}</span>
@@ -704,8 +704,8 @@ export default function GroupDetailPage({ params }) {
                 </div>
 
                 {/* Status & Expiration info */}
-                <div className="flex flex-wrap items-center justify-between gap-3 p-3 border border-ledger-border bg-ledger-subpanel text-xs font-mono">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 border border-ledger-border bg-ledger-subpanel text-xs font-mono">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-bone-dark">Status:</span>
                     {inviteData.isExpired ? (
                       <span className="text-debt font-semibold">Expired</span>
@@ -723,7 +723,7 @@ export default function GroupDetailPage({ params }) {
                     type="button"
                     disabled={regeneratingInvite}
                     onClick={handleRegenerateInvite}
-                    className="py-1 px-3 text-xs font-mono border border-ledger-border hover:border-bone text-bone transition-colors disabled:opacity-50"
+                    className="py-1 px-3 text-xs font-mono border border-ledger-border hover:border-bone text-bone transition-colors disabled:opacity-50 shrink-0"
                     title="Immediately invalidates previous links and generates a new code"
                   >
                     {regeneratingInvite ? 'Regenerating...' : '🔄 Revoke & Regenerate'}
@@ -826,7 +826,7 @@ export default function GroupDetailPage({ params }) {
 
           {/* Ledger Table */}
           <div className="border border-ledger-border bg-ledger-panel overflow-x-auto">
-            <table className="w-full text-left text-xs font-mono border-collapse">
+            <table className="w-full text-left text-xs font-mono border-collapse min-w-[700px]">
               <thead>
                 <tr className="border-b border-ledger-border bg-ledger-subpanel text-bone-dark uppercase text-[10px] tracking-wider">
                   <th className="py-2.5 px-4 font-normal">Date & Time</th>
@@ -921,7 +921,7 @@ export default function GroupDetailPage({ params }) {
 
       {/* Footer */}
       <footer className="border-t border-ledger-border bg-ledger-panel py-4 text-xs font-mono text-bone-dark">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
           <span>{group?.name} Group Ledger</span>
           <span>Append-Only Journal Log</span>
         </div>
