@@ -32,12 +32,6 @@ class NotFoundError extends AppError {
   }
 }
 
-class ConflictError extends AppError {
-  constructor(message, details = null) {
-    super(message, 409, 'CONFLICT', details);
-  }
-}
-
 class ConstraintDeadlockError extends AppError {
   constructor(message, details = {}) {
     super(
@@ -165,7 +159,6 @@ module.exports = {
   AppError,
   ValidationError,
   NotFoundError,
-  ConflictError,
   ConstraintDeadlockError,
   TransactionError,
   CurrencyConversionError,

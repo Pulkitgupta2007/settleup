@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { ValidationError, NotFoundError } = require('./errors');
+const { ValidationError } = require('./errors');
 
 /**
  * Checks if a string is a strictly valid 24-character hexadecimal MongoDB ObjectId.
@@ -323,7 +323,6 @@ function validateGroupInput(body) {
 }
 
 module.exports = {
-  isValidObjectId,
   validateObjectId,
   validateCurrencyCode,
   validatePositiveIntegerCents,

@@ -250,7 +250,4 @@ module.exports = {
   getExchangeRates,
   convertAmount,
   fetchLiveExchangeRates,
-  FALLBACK_RATES_FROM_USD,
-  MS_PER_HOUR,
-  FX_REQUEST_TIMEOUT_MS,
 };

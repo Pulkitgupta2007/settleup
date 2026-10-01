@@ -636,7 +636,5 @@ module.exports = {
   getUserBalancesAcrossGroups,
   getUnsettledPairwiseDebts,
   recordExpense,
-  buildExpenseLedgerRecords,
-  buildSettlementLedgerRecords,
   formatGroupConstraints,
 };

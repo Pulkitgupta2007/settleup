@@ -100,7 +100,4 @@ module.exports = {
   RateLimiter,
   rateLimiter: globalLimiter,
   getClientIp,
-  DEFAULT_MAX_REQUESTS,
-  DEFAULT_WINDOW_MS,
-  CLEANUP_INTERVAL_MS,
 };

@@ -22,3 +22,6 @@ bin/
 settleup_cli
 *.o
 *.out
+
+# Trash
+_trash/

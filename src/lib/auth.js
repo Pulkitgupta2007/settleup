@@ -1,4 +1,3 @@
-const NextAuth = require('next-auth').default;
 const CredentialsProvider = require('next-auth/providers/credentials').default;
 const GoogleProvider = require('next-auth/providers/google').default;
 const bcrypt = require('bcryptjs');

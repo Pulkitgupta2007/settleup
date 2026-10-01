@@ -44,14 +44,6 @@ function getCppBinaryPath() {
 }
 
 /**
- * Checks if the compiled C++ native engine is available.
- * @returns {boolean}
- */
-function isCppAvailable() {
-  return getCppBinaryPath() !== null;
-}
-
-/**
  * Returns metadata about the currently active settlement engine.
  * @returns {{ type: 'cpp'|'javascript', binaryPath?: string, version: string }}
  */
@@ -131,7 +123,5 @@ function simplifyDebts(debts, options = {}) {
 module.exports = {
   ...jsSimplifier,
   simplifyDebts,
-  isCppAvailable,
-  getCppBinaryPath,
   getEngineInfo,
 };

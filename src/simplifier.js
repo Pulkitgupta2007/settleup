@@ -784,8 +784,4 @@ module.exports = {
   splitExpense,
   calculatePercentageSplit,
   calculateSharesSplit,
-  distributeRemainderCents,
-  compareByAmountDescAndName,
-  PERCENTAGE_SUM_TOLERANCE,
-  FRACTIONAL_CENT_EPSILON,
 };
