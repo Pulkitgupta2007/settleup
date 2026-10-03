@@ -1,123 +1,99 @@
 /**
  * SettleUp - Multi-Party Debt Netting Engine (C++)
  *
- * Implements greedy max-heap and exact-match settlement strategies
- * with an append-safe integer-cent money representation.
+ * Beginner-Friendly Implementation:
+ * Uses clean Object-Oriented Programming (OOP) to simplify debts
+ * between friends and find the minimum number of transactions needed.
  */
 
 #include <iostream>
 #include <vector>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <queue>
-#include <memory>
 #include <algorithm>
 #include <iomanip>
-#include <sstream>
 #include <cmath>
-#include <exception>
 
 using namespace std;
 
-// Domain Exception
-class SettleUpException : public exception {
-protected:
-    string message;
-public:
-    explicit SettleUpException(string msg) : message(std::move(msg)) {}
-    const char* what() const noexcept override { return message.c_str(); }
-};
+// ============================================================================
+// 1. DATA STRUCTURES: Money, Transaction & BalanceNode
+// ============================================================================
 
-// Value Object: Money (integer cents prevents floating-point drift)
-class Money {
-private:
-    long long cents;
-    string currency;
+// Helper function to format cents (e.g., 3050 cents -> "$30.50")
+string formatMoney(long long cents) {
+    long long absCents = abs(cents);
+    long long dollars = absCents / 100;
+    long long remainder = absCents % 100;
 
-public:
-    explicit Money(long long cents = 0, string currency = "USD")
-        : cents(cents), currency(std::move(currency)) {}
+    string result = (cents < 0 ? "-$" : "$") + to_string(dollars) + ".";
+    if (remainder < 10) result += "0";
+    result += to_string(remainder);
+    return result;
+}
 
-    static Money fromDollars(double dollars, const string& currency = "USD") {
-        return Money(static_cast<long long>(round(dollars * 100.0)), currency);
-    }
-
-    long long getCents() const noexcept { return cents; }
-    bool isPositive() const noexcept { return cents > 0; }
-    bool isNegative() const noexcept { return cents < 0; }
-    Money abs() const { return Money(std::abs(cents), currency); }
-
-    Money operator-(const Money& other) const { return Money(cents - other.cents, currency); }
-    Money& operator+=(const Money& other) { cents += other.cents; return *this; }
-    Money& operator-=(const Money& other) { cents -= other.cents; return *this; }
-    bool operator<(const Money& other) const noexcept { return cents < other.cents; }
-    bool operator>(const Money& other) const noexcept { return cents > other.cents; }
-    bool operator==(const Money& other) const noexcept { return cents == other.cents; }
-    bool operator!=(const Money& other) const noexcept { return cents != other.cents; }
-
-    friend ostream& operator<<(ostream& os, const Money& m) {
-        long long absC = std::abs(m.cents);
-        if (m.cents < 0) os << "-";
-        if (m.currency == "USD") os << "$";
-        else os << m.currency << " ";
-        os << (absC / 100) << "." << setfill('0') << setw(2) << (absC % 100) << setfill(' ');
-        return os;
-    }
-};
-
-// Value Object: Transaction
+// Represents a single transaction: who pays, who receives, and how much
 struct Transaction {
-    string debtor;
-    string creditor;
-    Money amount;
+    string debtor;      // Person who pays
+    string creditor;    // Person who receives money
+    long long amount;   // In cents (e.g. 1000 = $10.00)
     string description;
 
-    Transaction(string from, string to, Money amt, string desc = "")
-        : debtor(std::move(from)), creditor(std::move(to)), amount(amt), description(std::move(desc)) {
-        if (debtor == creditor) {
-            throw SettleUpException("Debtor and creditor cannot be the same person: " + debtor);
-        }
-        if (amount.getCents() <= 0) {
-            throw SettleUpException("Transaction amount must be strictly positive.");
-        }
-    }
-
-    friend ostream& operator<<(ostream& os, const Transaction& t) {
-        os << left << setw(12) << t.debtor 
-           << " pays " << left << setw(12) << t.creditor 
-           << " -> " << right << setw(10) << t.amount;
-        if (!t.description.empty()) os << " (" << t.description << ")";
-        return os;
+    Transaction(string from, string to, long long amt, string desc = "") {
+        debtor = from;
+        creditor = to;
+        amount = amt;
+        description = desc;
     }
 };
 
+// Represents a person and their net balance, used in the Max-Heap priority queue
 struct BalanceNode {
     string name;
-    Money balance;
+    long long balance;
 
+    // Highest balance gets top priority in the heap
     bool operator<(const BalanceNode& other) const {
-        if (balance != other.balance) return balance < other.balance;
-        return name > other.name;
+        return balance < other.balance;
     }
 };
 
-// Common heap-based greedy cash flow resolution
-static void resolveGreedyHeap(
-    priority_queue<BalanceNode>& debtors,
-    priority_queue<BalanceNode>& creditors,
-    vector<Transaction>& settlements,
-    const string& label
-) {
+// ============================================================================
+// 2. ALGORITHMS: Greedy Heap & Exact-Match Debt Simplification
+// ============================================================================
+
+// Strategy 1: Greedy Max-Heap Strategy
+// Repeatedly pairs the person who owes the most with the person owed the most.
+vector<Transaction> solveGreedy(const unordered_map<string, long long>& netBalances) {
+    vector<Transaction> settlements;
+    priority_queue<BalanceNode> debtors;   // People who owe money (negative balance)
+    priority_queue<BalanceNode> creditors; // People who receive money (positive balance)
+
+    // Separate people into debtors and creditors
+    for (const auto& entry : netBalances) {
+        string person = entry.first;
+        long long balance = entry.second;
+
+        if (balance < 0) {
+            debtors.push({person, -balance}); // Store as positive debt
+        } else if (balance > 0) {
+            creditors.push({person, balance});
+        }
+    }
+
+    // Match largest debtor with largest creditor
     while (!debtors.empty() && !creditors.empty()) {
-        auto debtor = debtors.top();
+        BalanceNode debtor = debtors.top();
         debtors.pop();
-        auto creditor = creditors.top();
+
+        BalanceNode creditor = creditors.top();
         creditors.pop();
 
-        Money settled = min(debtor.balance, creditor.balance);
-        settlements.emplace_back(debtor.name, creditor.name, settled, label);
+        long long settled = min(debtor.balance, creditor.balance);
+        settlements.push_back(Transaction(debtor.name, creditor.name, settled, "Greedy cycle netting"));
 
+        // If someone still has money remaining, put them back into the queue
         if (debtor.balance > settled) {
             debtors.push({debtor.name, debtor.balance - settled});
         }
@@ -125,270 +101,210 @@ static void resolveGreedyHeap(
             creditors.push({creditor.name, creditor.balance - settled});
         }
     }
+
+    return settlements;
 }
 
-// Strategy Pattern Interface
-class ISettlementStrategy {
-public:
-    virtual ~ISettlementStrategy() = default;
-    virtual vector<Transaction> settle(const unordered_map<string, Money>& netBalances) = 0;
-    virtual string getStrategyName() const = 0;
-};
+// Strategy 2: Exact-Match Optimized Strategy
+// First pairs people who owe the EXACT same amount to eliminate 2 people at once.
+vector<Transaction> solveExactMatch(const unordered_map<string, long long>& netBalances) {
+    vector<Transaction> settlements;
+    vector<BalanceNode> debtors;
+    vector<BalanceNode> creditors;
 
-// Strategy 1: Greedy Max-Heap Strategy (Standard O(N log N))
-class GreedyHeapStrategy : public ISettlementStrategy {
-public:
-    string getStrategyName() const override {
-        return "Greedy Max-Heap Cash-Flow Minimization (Standard O(N log N))";
+    for (const auto& entry : netBalances) {
+        if (entry.second < 0) debtors.push_back({entry.first, -entry.second});
+        else if (entry.second > 0) creditors.push_back({entry.first, entry.second});
     }
 
-    vector<Transaction> settle(const unordered_map<string, Money>& netBalances) override {
-        vector<Transaction> settlements;
-        priority_queue<BalanceNode> debtors, creditors;
-
-        for (const auto& [name, balance] : netBalances) {
-            if (balance.isNegative()) debtors.push({name, balance.abs()});
-            else if (balance.isPositive()) creditors.push({name, balance});
-        }
-
-        resolveGreedyHeap(debtors, creditors, settlements, "Greedy cycle netting");
-        return settlements;
-    }
-};
-
-// Strategy 2: Exact-Match Optimized Greedy Strategy
-class ExactMatchGreedyStrategy : public ISettlementStrategy {
-public:
-    string getStrategyName() const override {
-        return "Exact-Match Optimized Greedy Strategy (Subgroup Elimination)";
-    }
-
-    vector<Transaction> settle(const unordered_map<string, Money>& netBalances) override {
-        vector<Transaction> settlements;
-        vector<BalanceNode> debtors, creditors;
-
-        for (const auto& [name, balance] : netBalances) {
-            if (balance.isNegative()) debtors.push_back({name, balance.abs()});
-            else if (balance.isPositive()) creditors.push_back({name, balance});
-        }
-
-        // Pass 1: Eliminate exact 1:1 bilateral matches
-        for (auto dIt = debtors.begin(); dIt != debtors.end(); ) {
-            bool matched = false;
-            for (auto cIt = creditors.begin(); cIt != creditors.end(); ++cIt) {
-                if (dIt->balance == cIt->balance) {
-                    settlements.emplace_back(dIt->name, cIt->name, dIt->balance, "Exact balance match");
-                    creditors.erase(cIt);
-                    dIt = debtors.erase(dIt);
-                    matched = true;
-                    break;
-                }
+    // Pass 1: Find exact 1-to-1 matches (debtor.amount == creditor.amount)
+    for (size_t i = 0; i < debtors.size(); i++) {
+        for (size_t j = 0; j < creditors.size(); j++) {
+            if (debtors[i].balance > 0 && debtors[i].balance == creditors[j].balance) {
+                settlements.push_back(Transaction(debtors[i].name, creditors[j].name, debtors[i].balance, "Exact balance match"));
+                debtors[i].balance = 0;   // Marked as settled
+                creditors[j].balance = 0; // Marked as settled
+                break;
             }
-            if (!matched) ++dIt;
         }
-
-        // Pass 2: Heap-based greedy resolution for remaining balances
-        priority_queue<BalanceNode> dHeap(debtors.begin(), debtors.end());
-        priority_queue<BalanceNode> cHeap(creditors.begin(), creditors.end());
-        resolveGreedyHeap(dHeap, cHeap, settlements, "Greedy balance netting");
-
-        return settlements;
-    }
-};
-
-// Settlement Report & JSON Serializer
-class SettlementReport {
-private:
-    string strategyName;
-    vector<Transaction> rawTransactions;
-    vector<Transaction> settlementPlan;
-    unordered_map<string, Money> netBalances;
-    Money rawTotalVolume;
-    Money settledTotalVolume;
-
-public:
-    SettlementReport(
-        string strategy,
-        vector<Transaction> raw,
-        vector<Transaction> plan,
-        unordered_map<string, Money> balances
-    ) : strategyName(std::move(strategy)),
-        rawTransactions(std::move(raw)),
-        settlementPlan(std::move(plan)),
-        netBalances(std::move(balances)),
-        rawTotalVolume(0),
-        settledTotalVolume(0) {
-        for (const auto& tx : rawTransactions) rawTotalVolume += tx.amount;
-        for (const auto& tx : settlementPlan) settledTotalVolume += tx.amount;
     }
 
-    void display() const {
-        cout << "\n======================================================================\n";
-        cout << "  SETTLEUP - OOPS DEBT SETTLEMENT REPORT\n";
-        cout << "  Active Strategy: " << strategyName << "\n";
-        cout << "======================================================================\n";
+    // Pass 2: Fall back to greedy max-heap for remaining balances
+    priority_queue<BalanceNode> dHeap, cHeap;
+    for (const auto& d : debtors) if (d.balance > 0) dHeap.push(d);
+    for (const auto& c : creditors) if (c.balance > 0) cHeap.push(c);
 
-        cout << "\n[1] Initial Raw Transactions (" << rawTransactions.size() << " transfers):\n";
-        cout << "----------------------------------------------------------------------\n";
-        for (size_t i = 0; i < rawTransactions.size(); ++i) {
-            cout << "  " << (i + 1) << ". " << left << setw(12) << rawTransactions[i].debtor
-                 << " owes " << left << setw(12) << rawTransactions[i].creditor
-                 << " : " << right << setw(10) << rawTransactions[i].amount << "\n";
-        }
+    while (!dHeap.empty() && !cHeap.empty()) {
+        BalanceNode debtor = dHeap.top(); dHeap.pop();
+        BalanceNode creditor = cHeap.top(); cHeap.pop();
 
-        cout << "\n[2] Reduced Net Balances (O(V) Scalar Ledger):\n";
-        cout << "----------------------------------------------------------------------\n";
-        vector<pair<string, Money>> sortedBalances(netBalances.begin(), netBalances.end());
-        sort(sortedBalances.begin(), sortedBalances.end());
+        long long settled = min(debtor.balance, creditor.balance);
+        settlements.push_back(Transaction(debtor.name, creditor.name, settled, "Greedy balance netting"));
 
-        for (const auto& [name, balance] : sortedBalances) {
-            string status = balance.isPositive() ? "[CREDITOR: Receives]" 
-                          : balance.isNegative() ? "[DEBTOR  : Pays    ]" 
-                          : "[SETTLED : Balanced]";
-            cout << "  * " << left << setw(14) << name 
-                 << left << setw(22) << status 
-                 << right << setw(10) << balance << "\n";
-        }
-
-        cout << "\n[3] Optimal Simplified Settlement Plan (" << settlementPlan.size() << " transfers):\n";
-        cout << "----------------------------------------------------------------------\n";
-        for (size_t i = 0; i < settlementPlan.size(); ++i) {
-            cout << "  Step " << (i + 1) << ": " << settlementPlan[i] << "\n";
-        }
-
-        int rawCount = static_cast<int>(rawTransactions.size());
-        int planCount = static_cast<int>(settlementPlan.size());
-        double pctTx = rawCount > 0 ? (static_cast<double>(rawCount - planCount) / rawCount) * 100.0 : 0.0;
-        long long savedC = rawTotalVolume.getCents() - settledTotalVolume.getCents();
-        double pctCash = rawTotalVolume.getCents() > 0 ? (static_cast<double>(savedC) / rawTotalVolume.getCents()) * 100.0 : 0.0;
-
-        cout << "\n[4] Algorithmic Efficiency Metrics:\n";
-        cout << "----------------------------------------------------------------------\n";
-        cout << "  * Transactions Required : " << planCount << " (reduced from " << rawCount 
-             << ", -" << fixed << setprecision(1) << pctTx << "%)\n";
-        cout << "  * Total Cash in Motion  : " << settledTotalVolume 
-             << " (reduced from " << rawTotalVolume 
-             << ", -" << fixed << setprecision(1) << pctCash << "% cash drag)\n";
-        cout << "  * Invariant Assertion   : EXACT ZERO-SUM CONSERVED ($0.00 drift)\n";
-        cout << "======================================================================\n\n";
+        if (debtor.balance > settled) dHeap.push({debtor.name, debtor.balance - settled});
+        if (creditor.balance > settled) cHeap.push({creditor.name, creditor.balance - settled});
     }
 
-    string toJson() const {
-        ostringstream oss;
-        oss << "{\"success\":true,\"engine\":\"C++ Native OOP Engine (v1.0)\",";
-        oss << "\"strategy\":\"" << strategyName << "\",";
-        oss << "\"settlement\":[";
-        for (size_t i = 0; i < settlementPlan.size(); ++i) {
-            if (i > 0) oss << ",";
-            oss << "{\"from\":\"" << settlementPlan[i].debtor << "\","
-                << "\"to\":\"" << settlementPlan[i].creditor << "\","
-                << "\"amount\":" << settlementPlan[i].amount.getCents() << ","
-                << "\"description\":\"" << settlementPlan[i].description << "\"}";
-        }
-        oss << "],\"metrics\":{";
-        oss << "\"rawCount\":" << rawTransactions.size() << ",";
-        oss << "\"settledCount\":" << settlementPlan.size() << ",";
-        oss << "\"rawVolume\":" << rawTotalVolume.getCents() << ",";
-        oss << "\"settledVolume\":" << settledTotalVolume.getCents() << "}}";
-        return oss.str();
-    }
-};
+    return settlements;
+}
 
-// SettleUpGroup Facade
+// ============================================================================
+// 3. OOP CLASS: SettleUpGroup (Encapsulates Group Data and Solvers)
+// ============================================================================
+
 class SettleUpGroup {
-private:
-    string groupName;
-    string baseCurrency;
-    unordered_set<string> members;
-    vector<Transaction> transactions;
-    unique_ptr<ISettlementStrategy> strategy;
-
 public:
-    explicit SettleUpGroup(string name, string currency = "USD")
-        : groupName(std::move(name)), 
-          baseCurrency(std::move(currency)), 
-          strategy(make_unique<GreedyHeapStrategy>()) {}
+    string name;
+    vector<Transaction> transactions;
+    string strategy; // "greedy" or "exact"
 
-    void setStrategy(unique_ptr<ISettlementStrategy> newStrategy) {
-        if (!newStrategy) throw SettleUpException("Strategy cannot be null.");
-        strategy = std::move(newStrategy);
+    SettleUpGroup(string groupName = "My Group", string strat = "greedy") {
+        name = groupName;
+        strategy = strat;
     }
 
-    void recordTransaction(const string& from, const string& to, Money amount, const string& desc = "") {
-        members.insert(from);
-        members.insert(to);
-        transactions.emplace_back(from, to, amount, desc);
+    // Records a debt from one person to another
+    void recordTransaction(string from, string to, long long amountCents, string desc = "") {
+        transactions.push_back(Transaction(from, to, amountCents, desc));
     }
 
-    unordered_map<string, Money> calculateNetBalances() const {
-        unordered_map<string, Money> balances;
-        for (const auto& m : members) balances[m] = Money(0, baseCurrency);
+    // Helper to record amounts directly from dollars (e.g. 30.50 -> 3050 cents)
+    void recordTransactionDollars(string from, string to, double dollars, string desc = "") {
+        long long cents = static_cast<long long>(round(dollars * 100.0));
+        recordTransaction(from, to, cents, desc);
+    }
 
+    // Step 1: Calculate the net balance for each person
+    unordered_map<string, long long> calculateNetBalances() {
+        unordered_map<string, long long> balances;
         for (const auto& tx : transactions) {
             balances[tx.debtor] -= tx.amount;
             balances[tx.creditor] += tx.amount;
         }
-
-        long long netSum = 0;
-        for (const auto& [name, bal] : balances) netSum += bal.getCents();
-        if (netSum != 0) {
-            throw SettleUpException("Conservation of Money Invariant Violated: Net balance sum is " 
-                                    + to_string(netSum) + " cents (expected 0).");
-        }
         return balances;
     }
 
-    SettlementReport generateSettlementPlan() const {
-        auto netBalances = calculateNetBalances();
-        auto plan = strategy->settle(netBalances);
-        return SettlementReport(strategy->getStrategyName(), transactions, plan, netBalances);
+    // Step 2: Generate the simplified settlement plan
+    vector<Transaction> generateSettlementPlan() {
+        unordered_map<string, long long> netBalances = calculateNetBalances();
+        if (strategy == "exact") {
+            return solveExactMatch(netBalances);
+        }
+        return solveGreedy(netBalances);
+    }
+
+    // Prints a nice report to the console
+    void displayReport(string strategyTitle) {
+        vector<Transaction> plan = generateSettlementPlan();
+        unordered_map<string, long long> netBalances = calculateNetBalances();
+
+        cout << "\n======================================================================\n";
+        cout << "  SETTLEUP - OOPS DEBT SETTLEMENT REPORT\n";
+        cout << "  Active Strategy: " << strategyTitle << "\n";
+        cout << "======================================================================\n";
+
+        // 1. Raw Transactions
+        cout << "\n[1] Initial Raw Transactions (" << transactions.size() << " transfers):\n";
+        cout << "----------------------------------------------------------------------\n";
+        for (size_t i = 0; i < transactions.size(); ++i) {
+            cout << "  " << (i + 1) << ". " << left << setw(12) << transactions[i].debtor
+                 << " owes " << left << setw(12) << transactions[i].creditor
+                 << " : " << right << setw(10) << formatMoney(transactions[i].amount) << "\n";
+        }
+
+        // 2. Net Balances
+        cout << "\n[2] Reduced Net Balances (O(V) Scalar Ledger):\n";
+        cout << "----------------------------------------------------------------------\n";
+        vector<pair<string, long long>> sortedBalances(netBalances.begin(), netBalances.end());
+        sort(sortedBalances.begin(), sortedBalances.end());
+
+        for (const auto& entry : sortedBalances) {
+            string status = entry.second > 0 ? "[CREDITOR: Receives]"
+                          : entry.second < 0 ? "[DEBTOR  : Pays    ]"
+                          : "[SETTLED : Balanced]";
+            cout << "  * " << left << setw(14) << entry.first
+                 << left << setw(22) << status
+                 << right << setw(10) << formatMoney(entry.second) << "\n";
+        }
+
+        // 3. Simplified Settlement Plan
+        cout << "\n[3] Optimal Simplified Settlement Plan (" << plan.size() << " transfers):\n";
+        cout << "----------------------------------------------------------------------\n";
+        for (size_t i = 0; i < plan.size(); ++i) {
+            cout << "  Step " << (i + 1) << ": "
+                 << left << setw(12) << plan[i].debtor
+                 << " pays " << left << setw(12) << plan[i].creditor
+                 << " -> " << right << setw(10) << formatMoney(plan[i].amount);
+            if (!plan[i].description.empty()) cout << " (" << plan[i].description << ")";
+            cout << "\n";
+        }
+
+        // 4. Efficiency Metrics
+        long long rawTotal = 0;
+        for (const auto& tx : transactions) rawTotal += tx.amount;
+        long long settledTotal = 0;
+        for (const auto& tx : plan) settledTotal += tx.amount;
+
+        int rawCount = static_cast<int>(transactions.size());
+        int planCount = static_cast<int>(plan.size());
+        double pctTx = rawCount > 0 ? (static_cast<double>(rawCount - planCount) / rawCount) * 100.0 : 0.0;
+        double pctCash = rawTotal > 0 ? (static_cast<double>(rawTotal - settledTotal) / rawTotal) * 100.0 : 0.0;
+
+        cout << "\n[4] Algorithmic Efficiency Metrics:\n";
+        cout << "----------------------------------------------------------------------\n";
+        cout << "  * Transactions Required : " << planCount << " (reduced from " << rawCount
+             << ", -" << fixed << setprecision(1) << pctTx << "%)\n";
+        cout << "  * Total Cash in Motion  : " << formatMoney(settledTotal)
+             << " (reduced from " << formatMoney(rawTotal)
+             << ", -" << fixed << setprecision(1) << pctCash << "% cash drag)\n";
+        cout << "  * Invariant Assertion   : EXACT ZERO-SUM CONSERVED ($0.00 drift)\n";
+        cout << "======================================================================\n\n";
     }
 };
 
-// Interactive CLI and Demos
+// ============================================================================
+// 4. DEMO & INTERACTIVE CLI
+// ============================================================================
+
 void runOOPDemo() {
     cout << "\n>>> Running SettleUp Object-Oriented Architecture Demo <<<\n";
-    SettleUpGroup skiTrip("Alps Ski Trip 2026", "USD");
+    SettleUpGroup skiTrip("Alps Ski Trip 2026", "greedy");
 
-    skiTrip.recordTransaction("Rehan",   "Pulkit",  Money::fromDollars(30.00), "Chalet groceries");
-    skiTrip.recordTransaction("Pulkit",  "Arnav",   Money::fromDollars(40.00), "Snowboard rental");
-    skiTrip.recordTransaction("Arnav",   "Rehan",   Money::fromDollars(20.00), "Dinner contribution");
-    skiTrip.recordTransaction("David",   "Pulkit",  Money::fromDollars(25.00), "Gasoline split");
-    skiTrip.recordTransaction("Arnav",   "Emma",    Money::fromDollars(35.00), "Lift pass share");
-    skiTrip.recordTransaction("Rehan",   "Emma",    Money::fromDollars(15.00), "Thermal wear");
+    // Add sample transactions with Rehan, Pulkit, and Arnav
+    skiTrip.recordTransactionDollars("Rehan",   "Pulkit",  30.00, "Chalet groceries");
+    skiTrip.recordTransactionDollars("Pulkit",  "Arnav",   40.00, "Snowboard rental");
+    skiTrip.recordTransactionDollars("Arnav",   "Rehan",   20.00, "Dinner contribution");
+    skiTrip.recordTransactionDollars("David",   "Pulkit",  25.00, "Gasoline split");
+    skiTrip.recordTransactionDollars("Arnav",   "Emma",    35.00, "Lift pass share");
+    skiTrip.recordTransactionDollars("Rehan",   "Emma",    15.00, "Thermal wear");
 
-    cout << "\n[Demonstrating Strategy 1: Greedy Max-Heap Strategy]";
-    skiTrip.setStrategy(make_unique<GreedyHeapStrategy>());
-    skiTrip.generateSettlementPlan().display();
+    // Demo Strategy 1
+    skiTrip.strategy = "greedy";
+    skiTrip.displayReport("Greedy Max-Heap Cash-Flow Minimization (Standard O(N log N))");
 
-    cout << "\n[Demonstrating Strategy 2: Exact-Match Optimized Strategy (Polymorphic Swap)]";
-    skiTrip.setStrategy(make_unique<ExactMatchGreedyStrategy>());
-    skiTrip.generateSettlementPlan().display();
+    // Demo Strategy 2
+    skiTrip.strategy = "exact";
+    skiTrip.displayReport("Exact-Match Optimized Strategy (Subgroup Elimination)");
 }
 
 void runInteractiveCLI() {
     cout << "============================================================\n";
-    cout << "  SettleUp OOP Interactive CLI (C++ Engine)\n";
+    cout << "  SettleUp Interactive CLI (C++ Engine)\n";
     cout << "============================================================\n";
 
     string groupName;
     cout << "Enter Group Name: ";
-    getline(cin >> ws, groupName);
+    cin >> groupName;
 
-    SettleUpGroup group(groupName, "USD");
+    SettleUpGroup group(groupName);
 
     cout << "\nChoose Settlement Strategy:\n";
-    cout << "1. Greedy Max-Heap Strategy (Standard O(N log N))\n";
-    cout << "2. Exact-Match Optimized Greedy Strategy\n";
+    cout << "1. Greedy Max-Heap Strategy\n";
+    cout << "2. Exact-Match Strategy\n";
     cout << "Selection (1 or 2): ";
-    int stratChoice = 1;
-    cin >> stratChoice;
-
-    if (stratChoice == 2) {
-        group.setStrategy(make_unique<ExactMatchGreedyStrategy>());
-    } else {
-        group.setStrategy(make_unique<GreedyHeapStrategy>());
-    }
+    int choice = 1;
+    cin >> choice;
+    group.strategy = (choice == 2 ? "exact" : "greedy");
 
     cout << "\nEnter number of pairwise debts: ";
     int count = 0;
@@ -405,76 +321,83 @@ void runInteractiveCLI() {
         double amount;
         cout << "Debt #" << (i + 1) << ": ";
         cin >> debtor >> creditor >> amount;
-        try {
-            group.recordTransaction(debtor, creditor, Money::fromDollars(amount));
-        } catch (const SettleUpException& ex) {
-            cerr << "Validation Error: " << ex.what() << ". Skipping.\n";
-        }
+        group.recordTransactionDollars(debtor, creditor, amount);
     }
 
-    try {
-        group.generateSettlementPlan().display();
-    } catch (const SettleUpException& ex) {
-        cerr << "Execution Error: " << ex.what() << "\n";
-    }
+    group.displayReport(group.strategy == "exact" ? "Exact-Match Strategy" : "Greedy Strategy");
 }
 
-// JSON Bridge for Next.js / Node.js Interoperability
-static string extractJsonString(const string& obj, const string& key) {
-    string pattern = "\"" + key + "\"";
-    size_t keyPos = obj.find(pattern);
+// ============================================================================
+// 5. JSON BRIDGE (Connects C++ Engine with Website Backend)
+// ============================================================================
+
+// Simple helper to extract string values from JSON
+string extractJsonString(const string& json, const string& key) {
+    string searchKey = "\"" + key + "\"";
+    size_t keyPos = json.find(searchKey);
     if (keyPos == string::npos) return "";
-    size_t colonPos = obj.find(':', keyPos + pattern.length());
+
+    size_t colonPos = json.find(':', keyPos);
     if (colonPos == string::npos) return "";
-    size_t quoteStart = obj.find('"', colonPos + 1);
+
+    size_t quoteStart = json.find('"', colonPos + 1);
     if (quoteStart == string::npos) return "";
-    size_t quoteEnd = obj.find('"', quoteStart + 1);
+
+    size_t quoteEnd = json.find('"', quoteStart + 1);
     if (quoteEnd == string::npos) return "";
-    return obj.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
+
+    return json.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
 }
 
-static long long extractJsonNumber(const string& obj, const string& key) {
-    string pattern = "\"" + key + "\"";
-    size_t keyPos = obj.find(pattern);
+// Simple helper to extract numbers from JSON
+long long extractJsonNumber(const string& json, const string& key) {
+    string searchKey = "\"" + key + "\"";
+    size_t keyPos = json.find(searchKey);
     if (keyPos == string::npos) return 0;
-    size_t colonPos = obj.find(':', keyPos + pattern.length());
+
+    size_t colonPos = json.find(':', keyPos);
     if (colonPos == string::npos) return 0;
-    size_t numStart = obj.find_first_of("0123456789-", colonPos + 1);
+
+    size_t numStart = json.find_first_of("0123456789-", colonPos + 1);
     if (numStart == string::npos) return 0;
-    size_t numEnd = obj.find_first_not_of("0123456789", numStart + (obj[numStart] == '-' ? 1 : 0));
+
+    size_t numEnd = json.find_first_not_of("0123456789", numStart + (json[numStart] == '-' ? 1 : 0));
     try {
-        return stoll(obj.substr(numStart, numEnd - numStart));
+        return stoll(json.substr(numStart, numEnd - numStart));
     } catch (...) {
         return 0;
     }
 }
 
+// Reads JSON debts from standard input, solves them, and outputs JSON
 void runJsonMode() {
-    string input((istreambuf_iterator<char>(cin)), istreambuf_iterator<char>());
+    string input, line;
+    while (getline(cin, line)) {
+        input += line;
+    }
+
     if (input.empty()) {
         cout << "{\"success\":false,\"error\":\"Empty JSON input\"}\n";
         return;
     }
 
-    string strategyName = extractJsonString(input, "strategy");
-    if (strategyName.empty()) strategyName = "greedy";
+    string strategy = extractJsonString(input, "strategy");
+    if (strategy.empty()) strategy = "greedy";
 
-    SettleUpGroup group("API Group", "USD");
-    if (strategyName == "exact") {
-        group.setStrategy(make_unique<ExactMatchGreedyStrategy>());
-    } else {
-        group.setStrategy(make_unique<GreedyHeapStrategy>());
-    }
+    SettleUpGroup group("API Group", strategy);
 
+    // Parse debts array
     size_t debtsPos = input.find("\"debts\"");
     if (debtsPos != string::npos) {
         size_t arrayStart = input.find('[', debtsPos);
         size_t arrayEnd = input.find(']', arrayStart);
+
         if (arrayStart != string::npos && arrayEnd != string::npos) {
             size_t cursor = arrayStart;
             while (cursor < arrayEnd) {
                 size_t objStart = input.find('{', cursor);
                 if (objStart == string::npos || objStart >= arrayEnd) break;
+
                 size_t objEnd = input.find('}', objStart);
                 if (objEnd == string::npos || objEnd > arrayEnd) break;
 
@@ -484,46 +407,58 @@ void runJsonMode() {
                 long long amount = extractJsonNumber(debtObj, "amount");
 
                 if (!from.empty() && !to.empty() && amount > 0) {
-                    try {
-                        group.recordTransaction(from, to, Money(amount));
-                    } catch (...) {}
+                    group.recordTransaction(from, to, amount);
                 }
                 cursor = objEnd + 1;
             }
         }
     }
 
-    try {
-        cout << group.generateSettlementPlan().toJson() << "\n";
-    } catch (const exception& ex) {
-        cout << "{\"success\":false,\"error\":\"" << ex.what() << "\"}\n";
+    // Solve and output JSON
+    vector<Transaction> plan = group.generateSettlementPlan();
+
+    cout << "{\"success\":true,\"settlement\":[";
+    for (size_t i = 0; i < plan.size(); ++i) {
+        if (i > 0) cout << ",";
+        cout << "{\"from\":\"" << plan[i].debtor << "\","
+             << "\"to\":\"" << plan[i].creditor << "\","
+             << "\"amount\":" << plan[i].amount << ","
+             << "\"description\":\"" << plan[i].description << "\"}";
     }
+    cout << "]}\n";
 }
 
+// ============================================================================
+// 6. MAIN FUNCTION
+// ============================================================================
+
 int main(int argc, char* argv[]) {
+    // Fast I/O
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
-    try {
-        if (argc > 1 && string(argv[1]) == "--json") {
-            runJsonMode();
-        } else if (argc > 1 && string(argv[1]) == "--demo") {
-            runOOPDemo();
-        } else {
-            cout << "Choose Mode:\n";
-            cout << "1. Run Complete OOP Project Showcase Demo\n";
-            cout << "2. Interactive Input\n";
-            cout << "Selection (1 or 2): ";
-            int choice = 1;
-            if (cin >> choice && choice == 2) {
-                runInteractiveCLI();
-            } else {
-                runOOPDemo();
-            }
-        }
-    } catch (const exception& ex) {
-        cerr << "Fatal Error: " << ex.what() << endl;
-        return 1;
+    // If website calls C++ with "--json", run in API mode
+    if (argc > 1 && string(argv[1]) == "--json") {
+        runJsonMode();
+        return 0;
+    }
+
+    // If terminal runs with "--demo", run showcase
+    if (argc > 1 && string(argv[1]) == "--demo") {
+        runOOPDemo();
+        return 0;
+    }
+
+    // Interactive Mode
+    cout << "Choose Mode:\n";
+    cout << "1. Run Complete OOP Demo\n";
+    cout << "2. Interactive Input\n";
+    cout << "Selection (1 or 2): ";
+    int choice = 1;
+    if (cin >> choice && choice == 2) {
+        runInteractiveCLI();
+    } else {
+        runOOPDemo();
     }
 
     return 0;
