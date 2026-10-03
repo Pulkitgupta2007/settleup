@@ -16,16 +16,16 @@
  * 
  * 3. INHERITANCE:
  *    - `GreedyHeapStrategy` and `ExactMatchGreedyStrategy` derive from `ISettlementStrategy`.
- *    - Custom domain exception hierarchy deriving from `std::exception`.
+ *    - Custom domain exception hierarchy deriving from `exception`.
  * 
  * 4. POLYMORPHISM:
- *    - Runtime Polymorphism: Dynamic strategy dispatch via `std::unique_ptr<ISettlementStrategy>`.
+ *    - Runtime Polymorphism: Dynamic strategy dispatch via `unique_ptr<ISettlementStrategy>`.
  *    - Compile-time Polymorphism: Operator overloading (`<<`, `+`, `-`, `<`, `==`).
  * 
  * 5. DESIGN PATTERNS:
  *    - Strategy Pattern: `SettlementContext` allows hot-swapping settlement heuristics.
  *    - Value Object Pattern: `Money` encapsulates integer-cent currency representations.
- *    - RAII: Modern smart pointers (`std::unique_ptr`, `std::shared_ptr`) with zero leaks.
+ *    - RAII: Modern smart pointers (`unique_ptr`, `shared_ptr`) with zero leaks.
  * 
  * ==============================================================================
  * Compilation:
@@ -50,15 +50,17 @@
 #include <cmath>
 #include <exception>
 
+using namespace std;
+
 // ==============================================================================
 // 1. CUSTOM EXCEPTION HIERARCHY (Inheritance & Polymorphism)
 // ==============================================================================
 
-class SettleUpException : public std::exception {
+class SettleUpException : public exception {
 protected:
-    std::string message;
+    string message;
 public:
-    explicit SettleUpException(std::string msg) : message(std::move(msg)) {}
+    explicit SettleUpException(string msg) : message(std::move(msg)) {}
     const char* what() const noexcept override {
         return message.c_str();
     }
@@ -68,12 +70,12 @@ class ConservationViolationException : public SettleUpException {
 public:
     explicit ConservationViolationException(long long netSum)
         : SettleUpException("Conservation of Money Invariant Violated: Net balance sum is " 
-                            + std::to_string(netSum) + " cents (expected 0).") {}
+                            + to_string(netSum) + " cents (expected 0).") {}
 };
 
 class InvalidTransactionException : public SettleUpException {
 public:
-    explicit InvalidTransactionException(const std::string& reason)
+    explicit InvalidTransactionException(const string& reason)
         : SettleUpException("Invalid Transaction: " + reason) {}
 };
 
@@ -84,21 +86,21 @@ public:
 class Money {
 private:
     long long cents; // Fixed-point integer cents (Prevents floating-point drift)
-    std::string currency;
+    string currency;
 
 public:
-    explicit Money(long long cents = 0, std::string currency = "USD")
+    explicit Money(long long cents = 0, string currency = "USD")
         : cents(cents), currency(std::move(currency)) {}
 
     // Factory method from dollars
-    static Money fromDollars(double dollars, const std::string& currency = "USD") {
-        long long c = static_cast<long long>(std::round(dollars * 100.0));
+    static Money fromDollars(double dollars, const string& currency = "USD") {
+        long long c = static_cast<long long>(round(dollars * 100.0));
         return Money(c, currency);
     }
 
     // Getters (Encapsulation)
     long long getCents() const noexcept { return cents; }
-    const std::string& getCurrency() const noexcept { return currency; }
+    const string& getCurrency() const noexcept { return currency; }
     bool isZero() const noexcept { return cents == 0; }
     bool isPositive() const noexcept { return cents > 0; }
     bool isNegative() const noexcept { return cents < 0; }
@@ -132,7 +134,7 @@ public:
     bool operator!=(const Money& other) const noexcept { return cents != other.cents; }
 
     // Stream Insertion Operator
-    friend std::ostream& operator<<(std::ostream& os, const Money& m) {
+    friend ostream& operator<<(ostream& os, const Money& m) {
         bool neg = m.cents < 0;
         long long absC = std::abs(m.cents);
         long long dollars = absC / 100;
@@ -142,7 +144,7 @@ public:
         if (m.currency == "USD") os << "$";
         else os << m.currency << " ";
 
-        os << dollars << "." << std::setfill('0') << std::setw(2) << rem << std::setfill(' ');
+        os << dollars << "." << setfill('0') << setw(2) << rem << setfill(' ');
         return os;
     }
 };
@@ -153,15 +155,15 @@ public:
 
 class Participant {
 private:
-    std::string id;
-    std::string name;
+    string id;
+    string name;
 
 public:
-    Participant(std::string id, std::string name)
+    Participant(string id, string name)
         : id(std::move(id)), name(std::move(name)) {}
 
-    const std::string& getId() const noexcept { return id; }
-    const std::string& getName() const noexcept { return name; }
+    const string& getId() const noexcept { return id; }
+    const string& getName() const noexcept { return name; }
 
     bool operator==(const Participant& other) const noexcept {
         return id == other.id;
@@ -170,13 +172,13 @@ public:
 
 class Transaction {
 private:
-    std::string debtor;   // Person who pays
-    std::string creditor; // Person who receives
+    string debtor;   // Person who pays
+    string creditor; // Person who receives
     Money amount;
-    std::string description;
+    string description;
 
 public:
-    Transaction(std::string from, std::string to, Money amt, std::string desc = "")
+    Transaction(string from, string to, Money amt, string desc = "")
         : debtor(std::move(from)), creditor(std::move(to)), amount(amt), description(std::move(desc)) {
         if (debtor == creditor) {
             throw InvalidTransactionException("Debtor and creditor cannot be the same person: " + debtor);
@@ -186,15 +188,15 @@ public:
         }
     }
 
-    const std::string& getDebtor() const noexcept { return debtor; }
-    const std::string& getCreditor() const noexcept { return creditor; }
+    const string& getDebtor() const noexcept { return debtor; }
+    const string& getCreditor() const noexcept { return creditor; }
     const Money& getAmount() const noexcept { return amount; }
-    const std::string& getDescription() const noexcept { return description; }
+    const string& getDescription() const noexcept { return description; }
 
-    friend std::ostream& operator<<(std::ostream& os, const Transaction& t) {
-        os << std::left << std::setw(12) << t.debtor 
-           << " pays " << std::left << std::setw(12) << t.creditor 
-           << " -> " << std::right << std::setw(10) << t.amount;
+    friend ostream& operator<<(ostream& os, const Transaction& t) {
+        os << left << setw(12) << t.debtor 
+           << " pays " << left << setw(12) << t.creditor 
+           << " -> " << right << setw(10) << t.amount;
         if (!t.description.empty()) {
             os << " (" << t.description << ")";
         }
@@ -204,7 +206,7 @@ public:
 
 // Priority Queue Entry for Heap-based greedy netting
 struct BalanceNode {
-    std::string name;
+    string name;
     Money balance;
 
     bool operator<(const BalanceNode& other) const {
@@ -231,11 +233,11 @@ public:
      * @param netBalances Map of participant name -> Net Balance
      * @return List of minimal settlement transactions
      */
-    virtual std::vector<Transaction> settle(
-        const std::unordered_map<std::string, Money>& netBalances
+    virtual vector<Transaction> settle(
+        const unordered_map<string, Money>& netBalances
     ) = 0;
 
-    virtual std::string getStrategyName() const = 0;
+    virtual string getStrategyName() const = 0;
 };
 
 /**
@@ -244,16 +246,16 @@ public:
  */
 class GreedyHeapStrategy : public ISettlementStrategy {
 public:
-    std::string getStrategyName() const override {
+    string getStrategyName() const override {
         return "Greedy Max-Heap Cash-Flow Minimization (Standard O(N log N))";
     }
 
-    std::vector<Transaction> settle(
-        const std::unordered_map<std::string, Money>& netBalances
+    vector<Transaction> settle(
+        const unordered_map<string, Money>& netBalances
     ) override {
-        std::vector<Transaction> settlements;
-        std::priority_queue<BalanceNode> debtors;
-        std::priority_queue<BalanceNode> creditors;
+        vector<Transaction> settlements;
+        priority_queue<BalanceNode> debtors;
+        priority_queue<BalanceNode> creditors;
 
         for (const auto& [name, balance] : netBalances) {
             if (balance.isNegative()) {
@@ -270,7 +272,7 @@ public:
             auto creditor = creditors.top();
             creditors.pop();
 
-            Money settled = std::min(debtor.balance, creditor.balance);
+            Money settled = min(debtor.balance, creditor.balance);
             settlements.emplace_back(debtor.name, creditor.name, settled, "Greedy cycle netting");
 
             if (debtor.balance > settled) {
@@ -293,16 +295,16 @@ public:
  */
 class ExactMatchGreedyStrategy : public ISettlementStrategy {
 public:
-    std::string getStrategyName() const override {
+    string getStrategyName() const override {
         return "Exact-Match Optimized Greedy Strategy (Subgroup Elimination)";
     }
 
-    std::vector<Transaction> settle(
-        const std::unordered_map<std::string, Money>& netBalances
+    vector<Transaction> settle(
+        const unordered_map<string, Money>& netBalances
     ) override {
-        std::vector<Transaction> settlements;
-        std::vector<BalanceNode> debtors;
-        std::vector<BalanceNode> creditors;
+        vector<Transaction> settlements;
+        vector<BalanceNode> debtors;
+        vector<BalanceNode> creditors;
 
         for (const auto& [name, balance] : netBalances) {
             if (balance.isNegative()) {
@@ -330,8 +332,8 @@ public:
         }
 
         // Pass 2: Fall back to Max-Heap greedy resolution for remaining balances
-        std::priority_queue<BalanceNode> dHeap(debtors.begin(), debtors.end());
-        std::priority_queue<BalanceNode> cHeap(creditors.begin(), creditors.end());
+        priority_queue<BalanceNode> dHeap(debtors.begin(), debtors.end());
+        priority_queue<BalanceNode> cHeap(creditors.begin(), creditors.end());
 
         while (!dHeap.empty() && !cHeap.empty()) {
             auto debtor = dHeap.top();
@@ -340,7 +342,7 @@ public:
             auto creditor = cHeap.top();
             cHeap.pop();
 
-            Money settled = std::min(debtor.balance, creditor.balance);
+            Money settled = min(debtor.balance, creditor.balance);
             settlements.emplace_back(debtor.name, creditor.name, settled, "Greedy balance netting");
 
             if (debtor.balance > settled) {
@@ -361,19 +363,19 @@ public:
 
 class SettlementReport {
 private:
-    std::string strategyName;
-    std::vector<Transaction> rawTransactions;
-    std::vector<Transaction> settlementPlan;
-    std::unordered_map<std::string, Money> netBalances;
+    string strategyName;
+    vector<Transaction> rawTransactions;
+    vector<Transaction> settlementPlan;
+    unordered_map<string, Money> netBalances;
     Money rawTotalVolume;
     Money settledTotalVolume;
 
 public:
     SettlementReport(
-        std::string strategy,
-        std::vector<Transaction> raw,
-        std::vector<Transaction> plan,
-        std::unordered_map<std::string, Money> balances
+        string strategy,
+        vector<Transaction> raw,
+        vector<Transaction> plan,
+        unordered_map<string, Money> balances
     ) : strategyName(std::move(strategy)),
         rawTransactions(std::move(raw)),
         settlementPlan(std::move(plan)),
@@ -386,42 +388,42 @@ public:
     }
 
     void display() const {
-        std::cout << "\n======================================================================\n";
-        std::cout << "  SETTLEUP - OOPS DEBT SETTLEMENT REPORT\n";
-        std::cout << "  Active Strategy: " << strategyName << "\n";
-        std::cout << "======================================================================\n";
+        cout << "\n======================================================================\n";
+        cout << "  SETTLEUP - OOPS DEBT SETTLEMENT REPORT\n";
+        cout << "  Active Strategy: " << strategyName << "\n";
+        cout << "======================================================================\n";
 
         // 1. Raw Pairwise Transfers
-        std::cout << "\n[1] Initial Raw Transactions (" << rawTransactions.size() << " transfers):\n";
-        std::cout << "----------------------------------------------------------------------\n";
+        cout << "\n[1] Initial Raw Transactions (" << rawTransactions.size() << " transfers):\n";
+        cout << "----------------------------------------------------------------------\n";
         for (size_t i = 0; i < rawTransactions.size(); ++i) {
-            std::cout << "  " << (i + 1) << ". " << std::left << std::setw(12) << rawTransactions[i].getDebtor()
-                      << " owes " << std::left << std::setw(12) << rawTransactions[i].getCreditor()
-                      << " : " << std::right << std::setw(10) << rawTransactions[i].getAmount() << "\n";
+            cout << "  " << (i + 1) << ". " << left << setw(12) << rawTransactions[i].getDebtor()
+                      << " owes " << left << setw(12) << rawTransactions[i].getCreditor()
+                      << " : " << right << setw(10) << rawTransactions[i].getAmount() << "\n";
         }
 
         // 2. Reduced Net Balances (O(V) Scalar Ledger)
-        std::cout << "\n[2] Reduced Net Balances (O(V) Scalar Ledger):\n";
-        std::cout << "----------------------------------------------------------------------\n";
-        std::vector<std::pair<std::string, Money>> sortedBalances(netBalances.begin(), netBalances.end());
-        std::sort(sortedBalances.begin(), sortedBalances.end());
+        cout << "\n[2] Reduced Net Balances (O(V) Scalar Ledger):\n";
+        cout << "----------------------------------------------------------------------\n";
+        vector<pair<string, Money>> sortedBalances(netBalances.begin(), netBalances.end());
+        sort(sortedBalances.begin(), sortedBalances.end());
 
         for (const auto& [name, balance] : sortedBalances) {
-            std::string status;
+            string status;
             if (balance.isPositive()) status = "[CREDITOR: Receives]";
             else if (balance.isNegative()) status = "[DEBTOR  : Pays    ]";
             else status = "[SETTLED : Balanced]";
 
-            std::cout << "  * " << std::left << std::setw(14) << name 
-                      << std::left << std::setw(22) << status 
-                      << std::right << std::setw(10) << balance << "\n";
+            cout << "  * " << left << setw(14) << name 
+                      << left << setw(22) << status 
+                      << right << setw(10) << balance << "\n";
         }
 
         // 3. Optimal Settlement Plan
-        std::cout << "\n[3] Optimal Simplified Settlement Plan (" << settlementPlan.size() << " transfers):\n";
-        std::cout << "----------------------------------------------------------------------\n";
+        cout << "\n[3] Optimal Simplified Settlement Plan (" << settlementPlan.size() << " transfers):\n";
+        cout << "----------------------------------------------------------------------\n";
         for (size_t i = 0; i < settlementPlan.size(); ++i) {
-            std::cout << "  Step " << (i + 1) << ": " << settlementPlan[i] << "\n";
+            cout << "  Step " << (i + 1) << ": " << settlementPlan[i] << "\n";
         }
 
         // 4. Algorithmic Efficiency Metrics
@@ -435,19 +437,19 @@ public:
         long long savedC = rawC - settledC;
         double pctCash = rawC > 0 ? (static_cast<double>(savedC) / rawC) * 100.0 : 0.0;
 
-        std::cout << "\n[4] Algorithmic Efficiency Metrics:\n";
-        std::cout << "----------------------------------------------------------------------\n";
-        std::cout << "  * Transactions Required : " << planCount << " (reduced from " << rawCount 
-                  << ", -" << std::fixed << std::setprecision(1) << pctTx << "%)\n";
-        std::cout << "  * Total Cash in Motion  : " << settledTotalVolume 
+        cout << "\n[4] Algorithmic Efficiency Metrics:\n";
+        cout << "----------------------------------------------------------------------\n";
+        cout << "  * Transactions Required : " << planCount << " (reduced from " << rawCount 
+                  << ", -" << fixed << setprecision(1) << pctTx << "%)\n";
+        cout << "  * Total Cash in Motion  : " << settledTotalVolume 
                   << " (reduced from " << rawTotalVolume 
-                  << ", -" << std::fixed << std::setprecision(1) << pctCash << "% cash drag)\n";
-        std::cout << "  * Invariant Assertion   : EXACT ZERO-SUM CONSERVED ($0.00 drift)\n";
-        std::cout << "======================================================================\n\n";
+                  << ", -" << fixed << setprecision(1) << pctCash << "% cash drag)\n";
+        cout << "  * Invariant Assertion   : EXACT ZERO-SUM CONSERVED ($0.00 drift)\n";
+        cout << "======================================================================\n\n";
     }
 
-    std::string toJson() const {
-        std::ostringstream oss;
+    string toJson() const {
+        ostringstream oss;
         oss << "{\"success\":true,\"engine\":\"C++ Native OOP Engine (v1.0)\",";
         oss << "\"strategy\":\"" << strategyName << "\",";
         oss << "\"settlement\":[";
@@ -473,37 +475,37 @@ public:
 
 class SettleUpGroup {
 private:
-    std::string groupName;
-    std::string baseCurrency;
-    std::unordered_set<std::string> members;
-    std::vector<Transaction> transactions;
-    std::unique_ptr<ISettlementStrategy> strategy; // Strategy Pattern (Polymorphism via pointer)
+    string groupName;
+    string baseCurrency;
+    unordered_set<string> members;
+    vector<Transaction> transactions;
+    unique_ptr<ISettlementStrategy> strategy; // Strategy Pattern (Polymorphism via pointer)
 
 public:
-    explicit SettleUpGroup(std::string name, std::string currency = "USD")
+    explicit SettleUpGroup(string name, string currency = "USD")
         : groupName(std::move(name)), 
           baseCurrency(std::move(currency)), 
-          strategy(std::make_unique<GreedyHeapStrategy>()) {}
+          strategy(make_unique<GreedyHeapStrategy>()) {}
 
     // Dynamic Strategy Injection (Strategy Pattern)
-    void setStrategy(std::unique_ptr<ISettlementStrategy> newStrategy) {
-        if (!newStrategy) throw std::invalid_argument("Strategy cannot be null.");
+    void setStrategy(unique_ptr<ISettlementStrategy> newStrategy) {
+        if (!newStrategy) throw invalid_argument("Strategy cannot be null.");
         strategy = std::move(newStrategy);
     }
 
-    void addMember(const std::string& memberName) {
+    void addMember(const string& memberName) {
         members.insert(memberName);
     }
 
-    void recordTransaction(const std::string& from, const std::string& to, Money amount, const std::string& desc = "") {
+    void recordTransaction(const string& from, const string& to, Money amount, const string& desc = "") {
         members.insert(from);
         members.insert(to);
         transactions.emplace_back(from, to, amount, desc);
     }
 
     // Step 1: Calculate Net Balances in O(E)
-    std::unordered_map<std::string, Money> calculateNetBalances() const {
-        std::unordered_map<std::string, Money> balances;
+    unordered_map<string, Money> calculateNetBalances() const {
+        unordered_map<string, Money> balances;
         for (const auto& m : members) {
             balances[m] = Money(0, baseCurrency);
         }
@@ -533,7 +535,7 @@ public:
         return SettlementReport(strategy->getStrategyName(), transactions, plan, netBalances);
     }
 
-    const std::string& getGroupName() const noexcept { return groupName; }
+    const string& getGroupName() const noexcept { return groupName; }
     size_t getMemberCount() const noexcept { return members.size(); }
     size_t getTransactionCount() const noexcept { return transactions.size(); }
 };
@@ -543,7 +545,7 @@ public:
 // ==============================================================================
 
 void runOOPDemo() {
-    std::cout << "\n>>> Running SettleUp Object-Oriented Architecture Demo <<<\n";
+    cout << "\n>>> Running SettleUp Object-Oriented Architecture Demo <<<\n";
 
     // Instantiate SettleUp Group (Encapsulation)
     SettleUpGroup skiTrip("Alps Ski Trip 2026", "USD");
@@ -557,61 +559,61 @@ void runOOPDemo() {
     skiTrip.recordTransaction("Rehan",   "Emma",    Money::fromDollars(15.00), "Thermal wear");
 
     // 1. Solve using Strategy 1 (GreedyHeapStrategy)
-    std::cout << "\n[Demonstrating Strategy 1: Greedy Max-Heap Strategy]";
-    skiTrip.setStrategy(std::make_unique<GreedyHeapStrategy>());
+    cout << "\n[Demonstrating Strategy 1: Greedy Max-Heap Strategy]";
+    skiTrip.setStrategy(make_unique<GreedyHeapStrategy>());
     SettlementReport report1 = skiTrip.generateSettlementPlan();
     report1.display();
 
     // 2. Solve using Strategy 2 (ExactMatchGreedyStrategy - Polymorphic swap)
-    std::cout << "\n[Demonstrating Strategy 2: Exact-Match Optimized Strategy (Polymorphic Swap)]";
-    skiTrip.setStrategy(std::make_unique<ExactMatchGreedyStrategy>());
+    cout << "\n[Demonstrating Strategy 2: Exact-Match Optimized Strategy (Polymorphic Swap)]";
+    skiTrip.setStrategy(make_unique<ExactMatchGreedyStrategy>());
     SettlementReport report2 = skiTrip.generateSettlementPlan();
     report2.display();
 }
 
 void runInteractiveCLI() {
-    std::cout << "============================================================\n";
-    std::cout << "  SettleUp OOP Interactive CLI (C++ Class Engine)\n";
-    std::cout << "============================================================\n";
+    cout << "============================================================\n";
+    cout << "  SettleUp OOP Interactive CLI (C++ Class Engine)\n";
+    cout << "============================================================\n";
 
-    std::string groupName;
-    std::cout << "Enter Group Name: ";
-    std::getline(std::cin >> std::ws, groupName);
+    string groupName;
+    cout << "Enter Group Name: ";
+    getline(cin >> ws, groupName);
 
     SettleUpGroup group(groupName, "USD");
 
-    std::cout << "\nChoose Settlement Strategy:\n";
-    std::cout << "1. Greedy Max-Heap Strategy (Standard O(N log N))\n";
-    std::cout << "2. Exact-Match Optimized Greedy Strategy\n";
-    std::cout << "Selection (1 or 2): ";
+    cout << "\nChoose Settlement Strategy:\n";
+    cout << "1. Greedy Max-Heap Strategy (Standard O(N log N))\n";
+    cout << "2. Exact-Match Optimized Greedy Strategy\n";
+    cout << "Selection (1 or 2): ";
     int stratChoice = 1;
-    std::cin >> stratChoice;
+    cin >> stratChoice;
 
     if (stratChoice == 2) {
-        group.setStrategy(std::make_unique<ExactMatchGreedyStrategy>());
+        group.setStrategy(make_unique<ExactMatchGreedyStrategy>());
     } else {
-        group.setStrategy(std::make_unique<GreedyHeapStrategy>());
+        group.setStrategy(make_unique<GreedyHeapStrategy>());
     }
 
-    std::cout << "\nEnter number of pairwise debts: ";
+    cout << "\nEnter number of pairwise debts: ";
     int count = 0;
-    if (!(std::cin >> count) || count <= 0) {
-        std::cout << "Invalid count. Exiting.\n";
+    if (!(cin >> count) || count <= 0) {
+        cout << "Invalid count. Exiting.\n";
         return;
     }
 
-    std::cout << "\nEnter transactions in format: <Debtor> <Creditor> <AmountInDollars>\n";
-    std::cout << "Example: Rehan Pulkit 30.50\n\n";
+    cout << "\nEnter transactions in format: <Debtor> <Creditor> <AmountInDollars>\n";
+    cout << "Example: Rehan Pulkit 30.50\n\n";
 
     for (int i = 0; i < count; ++i) {
-        std::string debtor, creditor;
+        string debtor, creditor;
         double amount;
-        std::cout << "Debt #" << (i + 1) << ": ";
-        std::cin >> debtor >> creditor >> amount;
+        cout << "Debt #" << (i + 1) << ": ";
+        cin >> debtor >> creditor >> amount;
         try {
             group.recordTransaction(debtor, creditor, Money::fromDollars(amount));
         } catch (const SettleUpException& ex) {
-            std::cerr << "Validation Error: " << ex.what() << ". Skipping.\n";
+            cerr << "Validation Error: " << ex.what() << ". Skipping.\n";
         }
     }
 
@@ -619,7 +621,7 @@ void runInteractiveCLI() {
         SettlementReport report = group.generateSettlementPlan();
         report.display();
     } catch (const SettleUpException& ex) {
-        std::cerr << "Execution Error: " << ex.what() << "\n";
+        cerr << "Execution Error: " << ex.what() << "\n";
     }
 }
 
@@ -627,70 +629,70 @@ void runInteractiveCLI() {
 // 8. JSON BRIDGE FOR NEXT.JS / NODE.JS INTEROPERABILITY
 // ==============================================================================
 
-static std::string extractJsonString(const std::string& obj, const std::string& key) {
-    std::string pattern = "\"" + key + "\"";
+static string extractJsonString(const string& obj, const string& key) {
+    string pattern = "\"" + key + "\"";
     size_t keyPos = obj.find(pattern);
-    if (keyPos == std::string::npos) return "";
+    if (keyPos == string::npos) return "";
     size_t colonPos = obj.find(':', keyPos + pattern.length());
-    if (colonPos == std::string::npos) return "";
+    if (colonPos == string::npos) return "";
     size_t quoteStart = obj.find('"', colonPos + 1);
-    if (quoteStart == std::string::npos) return "";
+    if (quoteStart == string::npos) return "";
     size_t quoteEnd = obj.find('"', quoteStart + 1);
-    if (quoteEnd == std::string::npos) return "";
+    if (quoteEnd == string::npos) return "";
     return obj.substr(quoteStart + 1, quoteEnd - quoteStart - 1);
 }
 
-static long long extractJsonNumber(const std::string& obj, const std::string& key) {
-    std::string pattern = "\"" + key + "\"";
+static long long extractJsonNumber(const string& obj, const string& key) {
+    string pattern = "\"" + key + "\"";
     size_t keyPos = obj.find(pattern);
-    if (keyPos == std::string::npos) return 0;
+    if (keyPos == string::npos) return 0;
     size_t colonPos = obj.find(':', keyPos + pattern.length());
-    if (colonPos == std::string::npos) return 0;
+    if (colonPos == string::npos) return 0;
     size_t numStart = obj.find_first_of("0123456789-", colonPos + 1);
-    if (numStart == std::string::npos) return 0;
+    if (numStart == string::npos) return 0;
     size_t numEnd = obj.find_first_not_of("0123456789", numStart + (obj[numStart] == '-' ? 1 : 0));
-    std::string numStr = obj.substr(numStart, numEnd - numStart);
+    string numStr = obj.substr(numStart, numEnd - numStart);
     try {
-        return std::stoll(numStr);
+        return stoll(numStr);
     } catch (...) {
         return 0;
     }
 }
 
 void runJsonMode() {
-    std::string input((std::istreambuf_iterator<char>(std::cin)),
-                       std::istreambuf_iterator<char>());
+    string input((istreambuf_iterator<char>(cin)),
+                       istreambuf_iterator<char>());
 
     if (input.empty()) {
-        std::cout << "{\"success\":false,\"error\":\"Empty JSON input\"}\n";
+        cout << "{\"success\":false,\"error\":\"Empty JSON input\"}\n";
         return;
     }
 
-    std::string strategyName = extractJsonString(input, "strategy");
+    string strategyName = extractJsonString(input, "strategy");
     if (strategyName.empty()) strategyName = "greedy";
 
     SettleUpGroup group("API Group", "USD");
     if (strategyName == "exact") {
-        group.setStrategy(std::make_unique<ExactMatchGreedyStrategy>());
+        group.setStrategy(make_unique<ExactMatchGreedyStrategy>());
     } else {
-        group.setStrategy(std::make_unique<GreedyHeapStrategy>());
+        group.setStrategy(make_unique<GreedyHeapStrategy>());
     }
 
     size_t debtsPos = input.find("\"debts\"");
-    if (debtsPos != std::string::npos) {
+    if (debtsPos != string::npos) {
         size_t arrayStart = input.find('[', debtsPos);
         size_t arrayEnd = input.find(']', arrayStart);
-        if (arrayStart != std::string::npos && arrayEnd != std::string::npos) {
+        if (arrayStart != string::npos && arrayEnd != string::npos) {
             size_t cursor = arrayStart;
             while (cursor < arrayEnd) {
                 size_t objStart = input.find('{', cursor);
-                if (objStart == std::string::npos || objStart >= arrayEnd) break;
+                if (objStart == string::npos || objStart >= arrayEnd) break;
                 size_t objEnd = input.find('}', objStart);
-                if (objEnd == std::string::npos || objEnd > arrayEnd) break;
+                if (objEnd == string::npos || objEnd > arrayEnd) break;
 
-                std::string debtObj = input.substr(objStart, objEnd - objStart + 1);
-                std::string from = extractJsonString(debtObj, "from");
-                std::string to = extractJsonString(debtObj, "to");
+                string debtObj = input.substr(objStart, objEnd - objStart + 1);
+                string from = extractJsonString(debtObj, "from");
+                string to = extractJsonString(debtObj, "to");
                 long long amount = extractJsonNumber(debtObj, "amount");
 
                 if (!from.empty() && !to.empty() && amount > 0) {
@@ -705,35 +707,35 @@ void runJsonMode() {
 
     try {
         SettlementReport report = group.generateSettlementPlan();
-        std::cout << report.toJson() << "\n";
-    } catch (const std::exception& ex) {
-        std::cout << "{\"success\":false,\"error\":\"" << ex.what() << "\"}\n";
+        cout << report.toJson() << "\n";
+    } catch (const exception& ex) {
+        cout << "{\"success\":false,\"error\":\"" << ex.what() << "\"}\n";
     }
 }
 
 int main(int argc, char* argv[]) {
-    std::ios_base::sync_with_stdio(false);
-    std::cin.tie(NULL);
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
 
     try {
-        if (argc > 1 && std::string(argv[1]) == "--json") {
+        if (argc > 1 && string(argv[1]) == "--json") {
             runJsonMode();
-        } else if (argc > 1 && std::string(argv[1]) == "--demo") {
+        } else if (argc > 1 && string(argv[1]) == "--demo") {
             runOOPDemo();
         } else {
-            std::cout << "Choose Mode:\n";
-            std::cout << "1. Run Complete OOP Project Showcase Demo\n";
-            std::cout << "2. Interactive Input\n";
-            std::cout << "Selection (1 or 2): ";
+            cout << "Choose Mode:\n";
+            cout << "1. Run Complete OOP Project Showcase Demo\n";
+            cout << "2. Interactive Input\n";
+            cout << "Selection (1 or 2): ";
             int choice = 1;
-            if (std::cin >> choice && choice == 2) {
+            if (cin >> choice && choice == 2) {
                 runInteractiveCLI();
             } else {
                 runOOPDemo();
             }
         }
-    } catch (const std::exception& ex) {
-        std::cerr << "Fatal Error: " << ex.what() << std::endl;
+    } catch (const exception& ex) {
+        cerr << "Fatal Error: " << ex.what() << endl;
         return 1;
     }
 
