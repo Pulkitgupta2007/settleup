@@ -12,16 +12,16 @@ SettleUp collapses complex, cyclic group debts into the minimal possible number 
 In traditional expense sharing, debts are tracked pair-by-pair: whenever Person A pays for an expense, every participant owes Person A directly. Over a shared trip or a long-term household, this naive approach produces a dense, cyclic directed graph:
 
 * In a group of $N$ people, there are up to $\frac{N(N - 1)}{2}$ potential debt relationships.
-* Circular obligations inevitably arise: Alice owes Bob \$40, Bob owes Charlie \$40, and Charlie owes Alice \$40.
+* Circular obligations inevitably arise: Rehan owes Pulkit \$40, Pulkit owes Arnav \$40, and Arnav owes Rehan \$40.
 * Settling naively requires everyone to execute multiple peer-to-peer bank transfers, incurring transaction fees, bank transfer delays, and human coordination friction.
 
 ```
 Naive Directed Debt Web (Dense & Cyclic):
-    [Alice] ── $40 ──> [Bob]
+    [Rehan] ── $40 ──> [Pulkit]
        ^                 │
        │                 │ $40
       $40                ▼
-       └─── [Charlie] <──┘
+       └─── [Arnav] <──┘
 (3 transfers needed to resolve $0 net change)
 ```
 
@@ -34,7 +34,7 @@ By reducing the directed debt graph to scalar net balances, all cycles are colla
 
 ```
 Simplified Settlement Plan:
-    Net Balances: Alice ($0), Bob ($0), Charlie ($0)
+    Net Balances: Rehan ($0), Pulkit ($0), Arnav ($0)
     Result: 0 transfers needed.
 ```
 
@@ -138,7 +138,7 @@ SettleUp combines a native C++ Object-Oriented settlement engine (with JavaScrip
 ## 4. Edge Cases Handled
 
 1. **Multi-Payer Co-Funded Bills:**
-   Multiple individuals can co-fund a single bill (e.g., Alice pays \$60 and Bob pays \$40 on a \$100 dinner). Handled via a 2D matrix allocation algorithm with strict penny conservation.
+   Multiple individuals can co-fund a single bill (e.g., Rehan pays \$60 and Pulkit pays \$40 on a \$100 dinner). Handled via a 2D matrix allocation algorithm with strict penny conservation.
 2. **Deterministic Leftover Cent Distribution:**
    Percentage and shares splits distribute residual cents using the largest-remainder method with deterministic tie-breaking.
 3. **Mutual Avoidance Constraints:**
@@ -201,9 +201,9 @@ npm run dev
 
 * **Local App:** Open [http://localhost:3000](http://localhost:3000) (automatically redirects to `/dashboard` or `/login`)
 * **Pre-seeded Demo Accounts:**
-  * Email: `alice@example.com` | Password: `demo-password-123`
-  * Email: `bob@example.com` | Password: `demo-password-123`
-  * Email: `charlie@example.com` | Password: `demo-password-123`
+  * Email: `rehan@example.com` | Password: `demo-password-123`
+  * Email: `pulkit@example.com` | Password: `demo-password-123`
+  * Email: `arnav@example.com` | Password: `demo-password-123`
 
 ### 4. Build C++ Engine Manually
 To compile the C++ OOP settlement engine binary manually:

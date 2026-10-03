@@ -549,12 +549,12 @@ void runOOPDemo() {
     SettleUpGroup skiTrip("Alps Ski Trip 2026", "USD");
 
     // Record multi-party transactions
-    skiTrip.recordTransaction("Alice",   "Bob",     Money::fromDollars(30.00), "Chalet groceries");
-    skiTrip.recordTransaction("Bob",     "Charlie", Money::fromDollars(40.00), "Snowboard rental");
-    skiTrip.recordTransaction("Charlie", "Alice",   Money::fromDollars(20.00), "Dinner contribution");
-    skiTrip.recordTransaction("David",   "Bob",     Money::fromDollars(25.00), "Gasoline split");
-    skiTrip.recordTransaction("Charlie", "Emma",    Money::fromDollars(35.00), "Lift pass share");
-    skiTrip.recordTransaction("Alice",   "Emma",    Money::fromDollars(15.00), "Thermal wear");
+    skiTrip.recordTransaction("Rehan",   "Pulkit",  Money::fromDollars(30.00), "Chalet groceries");
+    skiTrip.recordTransaction("Pulkit",  "Arnav",   Money::fromDollars(40.00), "Snowboard rental");
+    skiTrip.recordTransaction("Arnav",   "Rehan",   Money::fromDollars(20.00), "Dinner contribution");
+    skiTrip.recordTransaction("David",   "Pulkit",  Money::fromDollars(25.00), "Gasoline split");
+    skiTrip.recordTransaction("Arnav",   "Emma",    Money::fromDollars(35.00), "Lift pass share");
+    skiTrip.recordTransaction("Rehan",   "Emma",    Money::fromDollars(15.00), "Thermal wear");
 
     // 1. Solve using Strategy 1 (GreedyHeapStrategy)
     std::cout << "\n[Demonstrating Strategy 1: Greedy Max-Heap Strategy]";
@@ -601,7 +601,7 @@ void runInteractiveCLI() {
     }
 
     std::cout << "\nEnter transactions in format: <Debtor> <Creditor> <AmountInDollars>\n";
-    std::cout << "Example: Alice Bob 30.50\n\n";
+    std::cout << "Example: Rehan Pulkit 30.50\n\n";
 
     for (int i = 0; i < count; ++i) {
         std::string debtor, creditor;

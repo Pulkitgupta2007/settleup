@@ -88,7 +88,7 @@ function LoginForm() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              placeholder="Alice Cooper"
+              placeholder="Rehan"
               className="w-full px-3 py-2 text-xs font-mono bg-ledger-subpanel border border-ledger-border text-bone focus:border-bone focus:outline-none transition-colors"
             />
           </div>
@@ -103,7 +103,7 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            placeholder="alice@example.com"
+            placeholder="rehan@example.com"
             className="w-full px-3 py-2 text-xs font-mono bg-ledger-subpanel border border-ledger-border text-bone focus:border-bone focus:outline-none transition-colors"
           />
         </div>
@@ -162,25 +162,25 @@ function LoginForm() {
         </span>
         <div className="grid grid-cols-3 gap-2">
           <button
-            onClick={() => handleQuickLogin('alice@example.com', 'Alice')}
+            onClick={() => handleQuickLogin('rehan@example.com', 'Rehan')}
             type="button"
             className="py-1 px-2 text-xs font-mono border border-ledger-border bg-ledger-subpanel hover:border-bone-dark text-bone-muted"
           >
-            Alice
+            Rehan
           </button>
           <button
-            onClick={() => handleQuickLogin('bob@example.com', 'Bob')}
+            onClick={() => handleQuickLogin('pulkit@example.com', 'Pulkit')}
             type="button"
             className="py-1 px-2 text-xs font-mono border border-ledger-border bg-ledger-subpanel hover:border-bone-dark text-bone-muted"
           >
-            Bob
+            Pulkit
           </button>
           <button
-            onClick={() => handleQuickLogin('charlie@example.com', 'Charlie')}
+            onClick={() => handleQuickLogin('arnav@example.com', 'Arnav')}
             type="button"
             className="py-1 px-2 text-xs font-mono border border-ledger-border bg-ledger-subpanel hover:border-bone-dark text-bone-muted"
           >
-            Charlie
+            Arnav
           </button>
         </div>
       </div>

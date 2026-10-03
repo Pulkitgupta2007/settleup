@@ -13,9 +13,9 @@ const authOptions = {
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'email', placeholder: 'alice@example.com' },
+        email: { label: 'Email', type: 'email', placeholder: 'rehan@example.com' },
         password: { label: 'Password', type: 'password' },
-        name: { label: 'Name', type: 'text', placeholder: 'Alice' },
+        name: { label: 'Name', type: 'text', placeholder: 'Rehan' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
