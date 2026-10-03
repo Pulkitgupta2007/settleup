@@ -99,6 +99,21 @@ const authOptions = {
         token.id = user.id;
         token.defaultCurrency = user.defaultCurrency;
       }
+
+      // Guarantee token.id is always a valid 24-character MongoDB ObjectId
+      if ((!token.id || token.id.length !== 24) && token.email) {
+        try {
+          await connectToDatabase();
+          const dbUser = await User.findOne({ email: token.email.toLowerCase().trim() });
+          if (dbUser) {
+            token.id = dbUser._id.toString();
+            token.defaultCurrency = dbUser.defaultCurrency || 'USD';
+          }
+        } catch (_) {
+          // Non-fatal if DB lookup fails temporarily
+        }
+      }
+
       return token;
     },
 

@@ -4,6 +4,9 @@ const { getUserBalancesAcrossGroups } = require('../../../../../src/services/set
 const { validateObjectId } = require('../../../../../src/lib/validators');
 const { formatErrorResponse } = require('../../../../../src/lib/errors');
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * GET /api/users/[id]/balances?currency=USD
  * Returns covered-index aggregated net balance per group for a user.
@@ -19,14 +22,21 @@ async function GET(request, { params }) {
 
     const balances = await getUserBalancesAcrossGroups(id, currency);
 
-    return NextResponse.json({
-      success: true,
-      data: balances,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: balances,
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
+      }
+    );
   } catch (err) {
     const { statusCode, body } = formatErrorResponse(err);
     return NextResponse.json(body, { status: statusCode });
   }
 }
 
-module.exports = { GET };
+export { GET };

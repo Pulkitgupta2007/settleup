@@ -49,17 +49,26 @@ export default function DashboardPage() {
     setError(null);
 
     try {
-      // 1. Fetch all groups
-      const groupsRes = await fetch('/api/groups');
+      // 1. Fetch all groups with cache disabled
+      const groupsRes = await fetch('/api/groups', { cache: 'no-store' });
       const groupsJson = await groupsRes.json();
       if (!groupsJson.success) throw new Error(groupsJson.error?.message || 'Failed to fetch groups');
 
-      // 2. Fetch user's net balances across groups
-      const balancesRes = await fetch(`/api/users/${session.user.id}/balances?currency=${session.user.defaultCurrency || 'USD'}`);
-      const balancesJson = await balancesRes.json();
-
       setGroups(groupsJson.data || []);
-      setBalances(balancesJson.data || []);
+
+      // 2. Fetch user balances safely without blocking groups rendering
+      try {
+        const balancesRes = await fetch(
+          `/api/users/${session.user.id}/balances?currency=${session.user.defaultCurrency || 'USD'}`,
+          { cache: 'no-store' }
+        );
+        const balancesJson = await balancesRes.json();
+        if (balancesJson.success) {
+          setBalances(balancesJson.data || []);
+        }
+      } catch (balErr) {
+        console.warn('Failed to fetch user balances:', balErr);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -77,6 +86,7 @@ export default function DashboardPage() {
 
   const handleCreateGroup = async (e) => {
     e.preventDefault();
+    if (!groupName.trim()) return;
     setCreating(true);
     setError(null);
 
@@ -85,18 +95,28 @@ export default function DashboardPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: groupName,
+          name: groupName.trim(),
           baseCurrency,
-          members: [session.user.id],
+          members: session?.user?.id ? [session.user.id] : [],
         }),
       });
 
       const json = await res.json();
       if (!json.success) throw new Error(json.error?.message || 'Failed to create group');
 
+      const newGroup = json.data;
+
+      // Optimistically update groups list immediately so UI updates without delay
+      if (newGroup) {
+        setGroups((prev) => [newGroup, ...prev.filter((g) => g._id !== newGroup._id)]);
+      }
+
       setGroupName('');
       setShowCreateGroup(false);
-      fetchData();
+
+      // Re-sync with server and refresh router cache
+      await fetchData();
+      router.refresh();
     } catch (err) {
       setError(err.message);
     } finally {
