@@ -8,12 +8,7 @@
 #include <iomanip>
 
 using namespace std;
-
-// ============================================================================
 // 1. DATA STRUCTURES
-// ============================================================================
-
-// Represents a single debt transfer between two people
 struct Transaction
 {
     string from;
@@ -22,20 +17,16 @@ struct Transaction
     string note;
 };
 
-// Represents a person and their balance for the max-heap
 struct Person
 {
     string name;
     long long amount;
-
-    // Overloaded operator< to prioritize highest balance in max-heap
     bool operator<(const Person& other) const
     {
         return amount < other.amount;
     }
 };
 
-// Formats integer cents into standard dollar currency representation
 string formatMoney(long long cents)
 {
     long long dollars = abs(cents) / 100;
@@ -65,18 +56,13 @@ string formatMoney(long long cents)
     return result;
 }
 
-// ============================================================================
 // 2. CORE DEBT SIMPLIFICATION ALGORITHM
-// ============================================================================
-
-// Simplifies debts using greedy heap or exact match strategy
 vector<Transaction> simplifyDebts(const unordered_map<string, long long>& balances, bool exactMatch = false)
 {
     vector<Transaction> result;
     vector<Person> debtors;
     vector<Person> creditors;
 
-    // Separate participants into debtors and creditors
     for (const auto& p : balances)
     {
         if (p.second < 0)
@@ -95,7 +81,6 @@ vector<Transaction> simplifyDebts(const unordered_map<string, long long>& balanc
         }
     }
 
-    // Optional Strategy: Exact match elimination (pairs equal opposite balances)
     if (exactMatch)
     {
         for (auto& d : debtors)
@@ -119,7 +104,6 @@ vector<Transaction> simplifyDebts(const unordered_map<string, long long>& balanc
         }
     }
 
-    // Initialize Max-Heaps for debtors and creditors
     priority_queue<Person> dHeap;
     priority_queue<Person> cHeap;
 
@@ -139,7 +123,6 @@ vector<Transaction> simplifyDebts(const unordered_map<string, long long>& balanc
         }
     }
 
-    // Greedy matching: pair largest debtor with largest creditor
     while (!dHeap.empty() && !cHeap.empty())
     {
         Person d = dHeap.top();
@@ -177,10 +160,7 @@ vector<Transaction> simplifyDebts(const unordered_map<string, long long>& balanc
     return result;
 }
 
-// ============================================================================
 // 3. GROUP MANAGEMENT CLASS
-// ============================================================================
-
 // Group class: manages group members, expenses, and settlements
 class Group
 {
@@ -235,9 +215,7 @@ public:
         unordered_map<string, long long> balances = getNetBalances();
 
         cout << "\n\n";
-        cout << "============================================================\n";
         cout << "  SettleUp: " << name << " (" << (exact ? "Exact Match" : "Greedy Heap") << ")\n";
-        cout << "============================================================\n";
 
         cout << "\n1. Original Expenses (" << transactions.size() << "):\n";
         for (size_t i = 0; i < transactions.size(); i++)
@@ -295,11 +273,8 @@ public:
     }
 };
 
-// ============================================================================
 // 4. DEMO RUNNER
-// ============================================================================
 
-// Demo showing the trip transactions
 void runDemo()
 {
     Group skiTrip("Trip 2026");
@@ -311,15 +286,12 @@ void runDemo()
     skiTrip.addDebtDollars("Arnav",  "Emma",   35.00, "Lift pass share");
     skiTrip.addDebtDollars("Rehan",  "Emma",   15.00, "Thermal wear");
 
-    skiTrip.printReport(false); // Greedy
-    skiTrip.printReport(true);  // Exact Match
+    skiTrip.printReport(false); 
+    skiTrip.printReport(true); 
 }
 
-// ============================================================================
 // 5. INTERACTIVE CLI MODE
-// ============================================================================
 
-// Interactive input from terminal
 void runInteractiveCLI()
 {
     string groupName;
@@ -355,10 +327,8 @@ void runInteractiveCLI()
     group.printReport(useExact);
 }
 
-// ============================================================================
-// 6. JSON PARSING & IPC BRIDGE FOR NEXT.JS
-// ============================================================================
 
+// 6. JSON PARSING & IPC BRIDGE FOR NEXT.JS
 // Extracts field value from simple JSON string
 string parseJsonField(const string& json, const string& key)
 {
@@ -446,7 +416,6 @@ void runJsonMode()
                 }
                 catch (...)
                 {
-                    // Ignore parse error
                 }
             }
 
@@ -473,10 +442,7 @@ void runJsonMode()
     cout << "]}\n";
 }
 
-// ============================================================================
 // 7. MAIN FUNCTION
-// ============================================================================
-
 int main(int argc, char* argv[])
 {
     if (argc > 1)
