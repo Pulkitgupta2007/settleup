@@ -10,12 +10,33 @@ export const revalidate = 0;
 
 /**
  * GET /api/groups
- * Lists all active groups.
+ * Lists all active groups where the authenticated user is a member.
  */
-async function GET() {
+async function GET(request) {
   try {
     await connectToDatabase();
-    const groups = await Group.find()
+    const authUser = await getAuthenticatedUser(request);
+
+    // If unauthenticated, return empty list to protect private user data
+    if (!authUser?.id) {
+      return NextResponse.json(
+        {
+          success: true,
+          data: [],
+          count: 0,
+        },
+        {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate',
+          },
+        }
+      );
+    }
+
+    const userId = authUser.user?._id || authUser.id;
+
+    // Filter strictly to groups where this user is an active member
+    const groups = await Group.find({ members: userId })
       .populate('members', 'name email defaultCurrency')
       .sort({ updatedAt: -1 });
 

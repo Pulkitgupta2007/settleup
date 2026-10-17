@@ -198,12 +198,21 @@ async function getAuthenticatedUser(request) {
  */
 function isGroupMember(group, authUser) {
   if (!group || !authUser) return false;
-  const memberSet = new Set((group.members || []).map(m => m.toString()));
+  const memberSet = new Set(
+    (group.members || []).map(m => {
+      if (!m) return '';
+      if (m._id) return m._id.toString();
+      return m.toString();
+    })
+  );
 
-  if (authUser.id && memberSet.has(authUser.id)) {
+  const authUserId = authUser.id ? String(authUser.id) : null;
+  const authUserDocId = authUser.user?._id ? authUser.user._id.toString() : null;
+
+  if (authUserId && memberSet.has(authUserId)) {
     return true;
   }
-  if (authUser.user && memberSet.has(authUser.user._id.toString())) {
+  if (authUserDocId && memberSet.has(authUserDocId)) {
     return true;
   }
 

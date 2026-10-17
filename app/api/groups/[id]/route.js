@@ -5,6 +5,7 @@ const { getUnsettledPairwiseDebts, formatGroupConstraints } = require('../../../
 const { simplifyDebts, getEngineInfo } = require('../../../../src/cppBridge');
 const { validateObjectId } = require('../../../../src/lib/validators');
 const { NotFoundError, ValidationError, formatErrorResponse } = require('../../../../src/lib/errors');
+const { getAuthenticatedUser, isGroupMember } = require('../../../../src/lib/auth');
 
 /**
  * GET /api/groups/[id]
@@ -21,6 +22,33 @@ async function GET(request, { params }) {
     const group = await Group.findById(id).populate('members', 'name email defaultCurrency');
     if (!group) {
       throw new NotFoundError('Group', id);
+    }
+
+    const authUser = await getAuthenticatedUser(request);
+    if (!authUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'You must be logged in to view this group.',
+          },
+        },
+        { status: 401 }
+      );
+    }
+
+    if (!isGroupMember(group, authUser)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: 'You are not a member of this group.',
+          },
+        },
+        { status: 403 }
+      );
     }
 
     // 1. Fetch recent ledger entries
@@ -124,6 +152,33 @@ async function PATCH(request, { params }) {
     const group = await Group.findById(id);
     if (!group) {
       throw new NotFoundError('Group', id);
+    }
+
+    const authUser = await getAuthenticatedUser(request);
+    if (!authUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'You must be logged in to modify this group.',
+          },
+        },
+        { status: 401 }
+      );
+    }
+
+    if (!isGroupMember(group, authUser)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'FORBIDDEN',
+            message: 'You must be a member of this group to make updates.',
+          },
+        },
+        { status: 403 }
+      );
     }
 
     const body = await request.json().catch(() => ({}));
