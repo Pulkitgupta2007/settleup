@@ -920,10 +920,10 @@ export default function GroupDetailPage({ params }) {
                       </td>
                       <td className="py-2.5 px-4 whitespace-nowrap">
                         <span
-                          className={`text-[9px] uppercase px-1.5 py-0.5 border ${
+                          className={`text-xs uppercase font-medium ${
                             (entry.type || entry.entryType) === 'SETTLEMENT'
-                              ? 'border-credit/40 bg-credit/10 text-credit'
-                              : 'border-ledger-border bg-ledger-subpanel text-bone-muted'
+                              ? 'text-credit'
+                              : 'text-bone-muted'
                           }`}
                         >
                           {entry.type || entry.entryType}
