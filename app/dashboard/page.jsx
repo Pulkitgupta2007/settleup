@@ -18,20 +18,9 @@ export default function DashboardPage() {
 
   // New Group Form State
   const [showCreateGroup, setShowCreateGroup] = useState(false);
-  const [showGroupSelectModal, setShowGroupSelectModal] = useState(false);
   const [groupName, setGroupName] = useState('');
   const [baseCurrency, setBaseCurrency] = useState('USD');
   const [creating, setCreating] = useState(false);
-
-  const handleAddExpenseClick = () => {
-    if (groups.length === 0) {
-      setShowCreateGroup(true);
-    } else if (groups.length === 1) {
-      router.push(`/groups/${groups[0]._id}/expenses/new`);
-    } else {
-      setShowGroupSelectModal(true);
-    }
-  };
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -227,17 +216,6 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {groups.length > 0 && (
-              <button
-                onClick={handleAddExpenseClick}
-                type="button"
-                className="py-1.5 px-3 text-xs font-mono bg-credit hover:bg-credit/90 text-white font-semibold transition-colors"
-                title="Add a new expense to a group"
-              >
-                Add expense
-              </button>
-            )}
-
             <button
               onClick={() => setShowCreateGroup(!showCreateGroup)}
               type="button"
@@ -389,50 +367,6 @@ export default function DashboardPage() {
         )}
 
         {/* Select Group Modal for Adding Expense */}
-        {showGroupSelectModal && (
-          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-ledger-panel border border-ledger-border max-w-md w-full p-6 space-y-4 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-ledger-border pb-3">
-                <h3 className="font-display text-base text-bone font-medium">
-                  Select Group for Expense
-                </h3>
-                <button
-                  onClick={() => setShowGroupSelectModal(false)}
-                  className="text-bone-muted hover:text-bone text-xs font-mono"
-                >
-                  ✕ Close
-                </button>
-              </div>
-
-              <p className="text-xs font-mono text-bone-muted">
-                Expenses belong to specific groups so debts can be netted and simplified within that social circle.
-              </p>
-
-              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                {groups.map((g) => (
-                  <Link
-                    key={g._id}
-                    href={`/groups/${g._id}/expenses/new`}
-                    onClick={() => setShowGroupSelectModal(false)}
-                    className="block p-3 border border-ledger-border bg-ledger-subpanel hover:border-bone hover:bg-ledger-canvas transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-display text-sm font-medium text-bone">
-                        {g.name}
-                      </span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 border border-ledger-border text-bone-muted">
-                        {g.baseCurrency}
-                      </span>
-                    </div>
-                    <span className="text-[11px] font-mono text-bone-dark block mt-1">
-                      {(g.members || []).length} members
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Footer */}
