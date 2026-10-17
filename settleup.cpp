@@ -8,7 +8,6 @@
 #include <iomanip>
 
 using namespace std;
-// 1. DATA STRUCTURES
 struct Transaction
 {
     string from;
@@ -189,7 +188,6 @@ public:
         addDebt(from, to, cents, note);
     }
 
-    // Calculates the net scalar balance for each person
     unordered_map<string, long long> getNetBalances()
     {
         unordered_map<string, long long> balances;
@@ -455,7 +453,7 @@ int main(int argc, char* argv[])
             return 0;
         }
 
-        if (flag == "--demo")
+        if (flag == "--demo")    // ./bin/settleup_cli --demo
         {
             runDemo();
             return 0;
@@ -463,7 +461,7 @@ int main(int argc, char* argv[])
     }
 
     cout << "SettleUp Engine\n";
-    cout << "1. Run Demo\n";
+    cout << "1. Run Demo\n";    
     cout << "2. Enter Custom Debts\n";
     cout << "Select: ";
 
