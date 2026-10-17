@@ -819,23 +819,13 @@ export default function GroupDetailPage({ params }) {
 
         {/* SECTION: Plain SVG Debt Graph Visualization */}
         <section className="space-y-4">
-          <div className="flex items-center justify-between border-b border-ledger-border pb-2">
-            <div>
-              <h3 className="font-display text-lg text-bone font-medium">
-                Debt Settlement Topology
-              </h3>
-              <p className="text-xs text-bone-muted font-sans">
-                Direct cycle netting and optimal transfer reduction.
-              </p>
-            </div>
-            {settlementDebts.length > 0 && (
-              <Link
-                href={`/groups/${id}/settle`}
-                className="text-xs font-mono text-credit hover:underline underline-offset-4"
-              >
-                Execute settlement
-              </Link>
-            )}
+          <div className="border-b border-ledger-border pb-2">
+            <h3 className="font-display text-lg text-bone font-medium">
+              Debt Settlement Topology
+            </h3>
+            <p className="text-xs text-bone-muted font-sans">
+              Direct cycle netting and optimal transfer reduction.
+            </p>
           </div>
 
           {membersWithBalances.length >= 2 ? (
