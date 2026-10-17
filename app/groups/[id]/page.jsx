@@ -313,9 +313,10 @@ export default function GroupDetailPage({ params }) {
 
   // Filtered ledger entries
   const filteredLedger = ledgerEntries.filter(entry => {
+    const entryType = entry.type || entry.entryType;
     if (ledgerFilter === 'ALL') return true;
-    if (ledgerFilter === 'EXPENSE') return entry.entryType === 'EXPENSE';
-    if (ledgerFilter === 'SETTLEMENT') return entry.entryType === 'SETTLEMENT';
+    if (ledgerFilter === 'EXPENSE') return entryType === 'EXPENSE';
+    if (ledgerFilter === 'SETTLEMENT') return entryType === 'SETTLEMENT';
     return true;
   });
 
@@ -853,12 +854,12 @@ export default function GroupDetailPage({ params }) {
                       <td className="py-2.5 px-4 whitespace-nowrap">
                         <span
                           className={`text-[9px] uppercase px-1.5 py-0.5 border ${
-                            entry.entryType === 'SETTLEMENT'
+                            (entry.type || entry.entryType) === 'SETTLEMENT'
                               ? 'border-credit/40 bg-credit/10 text-credit'
                               : 'border-ledger-border bg-ledger-subpanel text-bone-muted'
                           }`}
                         >
-                          {entry.entryType}
+                          {entry.type || entry.entryType}
                         </span>
                       </td>
                       <td className="py-2.5 px-4 font-semibold text-bone whitespace-nowrap">
@@ -900,7 +901,7 @@ export default function GroupDetailPage({ params }) {
                         )}
                       </td>
                       <td className="py-2.5 px-4 text-bone-muted max-w-xs truncate">
-                        {entry.notes || '—'}
+                        {entry.description || entry.notes || '—'}
                       </td>
                     </tr>
                   );
