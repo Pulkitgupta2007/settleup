@@ -23,6 +23,7 @@ export default function GroupDetailPage({ params }) {
   const [availableUsers, setAvailableUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [addingMember, setAddingMember] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
 
   // Quick Demo Add State
   const [newMemberName, setNewMemberName] = useState('');
@@ -92,12 +93,13 @@ export default function GroupDetailPage({ params }) {
 
   const handleOpenAddMember = () => {
     setShowAddMember(true);
+    setUserSearchQuery('');
+    setSelectedUserId('');
     fetchUsers();
   };
 
-  const handleAddExistingMember = async (e) => {
-    e.preventDefault();
-    if (!selectedUserId) return;
+  const handleAddUserDirectly = async (userId) => {
+    if (!userId) return;
     setAddingMember(true);
     setError(null);
 
@@ -107,7 +109,7 @@ export default function GroupDetailPage({ params }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'add_member',
-          userId: selectedUserId,
+          userId,
         }),
       });
 
@@ -117,12 +119,19 @@ export default function GroupDetailPage({ params }) {
       setActionSuccess('Member successfully added to group.');
       setShowAddMember(false);
       setSelectedUserId('');
+      setUserSearchQuery('');
       fetchGroup();
     } catch (err) {
       setError(err.message);
     } finally {
       setAddingMember(false);
     }
+  };
+
+  const handleAddExistingMember = async (e) => {
+    e.preventDefault();
+    if (!selectedUserId) return;
+    await handleAddUserDirectly(selectedUserId);
   };
 
   const handleCreateAndAddMember = async (e) => {
@@ -311,6 +320,21 @@ export default function GroupDetailPage({ params }) {
   const { group, membersWithBalances = [], ledgerEntries = [], rawDebts = [], settlementDebts = [], isFullySettled } = groupData || {};
   const participantNames = membersWithBalances.map(m => m.name);
 
+  // Available candidate users not already in this group
+  const nonMemberUsers = availableUsers.filter(
+    (u) => !membersWithBalances.some((m) => m._id === u._id)
+  );
+
+  // Filtered candidate users by search query (name or email)
+  const filteredCandidateUsers = nonMemberUsers.filter((u) => {
+    if (!userSearchQuery.trim()) return true;
+    const q = userSearchQuery.toLowerCase().trim();
+    return (
+      (u.name && u.name.toLowerCase().includes(q)) ||
+      (u.email && u.email.toLowerCase().includes(q))
+    );
+  });
+
   // Filtered ledger entries
   const filteredLedger = ledgerEntries.filter(entry => {
     const entryType = entry.type || entry.entryType;
@@ -489,30 +513,93 @@ export default function GroupDetailPage({ params }) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              {/* Option A: Select from existing users */}
+              {/* Option A: Select from existing users with real-time search */}
               <form onSubmit={handleAddExistingMember} className="space-y-3">
-                <h4 className="text-xs font-mono uppercase tracking-wider text-bone-dark">
-                  Select Existing User
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-mono uppercase tracking-wider text-bone-dark">
+                    Select Existing User
+                  </h4>
+                  <span className="text-[10px] font-mono text-bone-muted">
+                    {filteredCandidateUsers.length} available
+                  </span>
+                </div>
+
+                {/* Search Bar */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={userSearchQuery}
+                    onChange={(e) => {
+                      setUserSearchQuery(e.target.value);
+                    }}
+                    placeholder="Search by name or email..."
+                    className="w-full px-3 py-2 text-xs font-mono bg-ledger-subpanel border border-ledger-border text-bone placeholder:text-bone-dark focus:border-bone focus:outline-none pr-8"
+                  />
+                  {userSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setUserSearchQuery('')}
+                      className="absolute right-2.5 top-2.5 text-xs font-mono text-bone-muted hover:text-bone"
+                      title="Clear search"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Dropdown Selector */}
                 <select
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
                   className="w-full px-3 py-2 text-xs font-mono bg-ledger-subpanel border border-ledger-border text-bone focus:border-bone focus:outline-none"
                 >
-                  <option value="">-- Choose User --</option>
-                  {availableUsers
-                    .filter((u) => !membersWithBalances.some((m) => m._id === u._id))
-                    .map((u) => (
-                      <option key={u._id} value={u._id}>
-                        {u.name} ({u.email})
-                      </option>
-                    ))}
+                  <option value="">
+                    {filteredCandidateUsers.length === 0
+                      ? (userSearchQuery.trim() ? '-- No matching users found --' : '-- Choose User --')
+                      : '-- Choose User --'}
+                  </option>
+                  {filteredCandidateUsers.map((u) => (
+                    <option key={u._id} value={u._id}>
+                      {u.name} ({u.email})
+                    </option>
+                  ))}
                 </select>
+
+                {/* Quick Results List when actively searching */}
+                {userSearchQuery.trim() && filteredCandidateUsers.length > 0 && (
+                  <div className="max-h-36 overflow-y-auto border border-ledger-border bg-ledger-subpanel divide-y divide-ledger-border">
+                    {filteredCandidateUsers.slice(0, 5).map((u) => (
+                      <div
+                        key={u._id}
+                        className={`p-2 flex items-center justify-between gap-2 text-xs font-mono cursor-pointer transition-colors ${
+                          selectedUserId === u._id ? 'bg-ledger-highlight' : 'hover:bg-ledger-canvas'
+                        }`}
+                        onClick={() => setSelectedUserId(u._id)}
+                      >
+                        <div className="truncate">
+                          <span className="text-bone font-medium block truncate">{u.name}</span>
+                          <span className="text-[10px] text-bone-muted block truncate">{u.email}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddUserDirectly(u._id);
+                          }}
+                          disabled={addingMember}
+                          className="px-2.5 py-1 text-[10px] font-mono bg-slate-900 hover:bg-slate-800 text-white font-semibold transition-colors shrink-0 disabled:opacity-50"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <button
                   type="submit"
                   disabled={!selectedUserId || addingMember}
-                  className="py-1.5 px-4 text-xs font-mono bg-slate-900 hover:bg-slate-800 text-white font-semibold disabled:opacity-50"
+                  className="py-1.5 px-4 text-xs font-mono bg-slate-900 hover:bg-slate-800 text-white font-semibold disabled:opacity-50 transition-colors"
                 >
                   {addingMember ? 'Adding...' : 'Add to Group'}
                 </button>
