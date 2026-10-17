@@ -567,29 +567,29 @@ async function settleGroup({ groupId, session: externalSession, notes = '' }) {
 }
 
 /**
- * Queries a user's net balance across all their groups in a specific currency.
- * Utilizes the compound index: { user: 1, currency: 1, group: 1, signedAmount: 1 }
- * 
- * Covered index: aggregates user balances without reading raw document bodies from disk.
+ * Queries a user's net balance across all their groups.
+ * Computes native balances in each group's base currency,
+ * and converts them to the target currency for global portfolio totals.
  * 
  * @param {string|mongoose.Types.ObjectId} userId
- * @param {string} currency - 3-letter currency code (e.g. 'USD')
- * @returns {Promise<Array<{ groupId: string, groupName: string, netBalanceCents: number, entryCount: number }>>}
+ * @param {string} currency - 3-letter currency code for portfolio conversion (e.g. 'USD')
+ * @returns {Promise<Array<{ groupId: string, groupName: string, baseCurrency: string, netBalanceCents: number, totalCreditedCents: number, totalDebitedCents: number, convertedNetCents: number, convertedCreditedCents: number, convertedDebitedCents: number, entryCount: number }>>}
  */
 async function getUserBalancesAcrossGroups(userId, currency = 'USD') {
   const userObjectId = new mongoose.Types.ObjectId(userId);
-  const normalizedCurrency = currency.toUpperCase();
+  const normalizedTargetCurrency = currency ? currency.toUpperCase().trim() : 'USD';
 
-  return LedgerEntry.aggregate([
+  // 1. Group all ledger entries for this user by groupId (across all currencies)
+  const rawGroupBalances = await LedgerEntry.aggregate([
     {
       $match: {
         user: userObjectId,
-        currency: normalizedCurrency,
       },
     },
     {
       $group: {
         _id: '$group',
+        currency: { $first: '$currency' },
         netBalanceCents: { $sum: '$signedAmount' },
         totalCreditedCents: {
           $sum: { $cond: [{ $eq: ['$direction', 'CREDIT'] }, '$amount', 0] },
@@ -618,7 +618,7 @@ async function getUserBalancesAcrossGroups(userId, currency = 'USD') {
       $project: {
         groupId: '$_id',
         groupName: { $ifNull: ['$groupInfo.name', 'Unknown Group'] },
-        baseCurrency: { $ifNull: ['$groupInfo.baseCurrency', normalizedCurrency] },
+        baseCurrency: { $ifNull: ['$groupInfo.baseCurrency', '$currency'] },
         netBalanceCents: 1,
         totalCreditedCents: 1,
         totalDebitedCents: 1,
@@ -629,6 +629,65 @@ async function getUserBalancesAcrossGroups(userId, currency = 'USD') {
       $sort: { netBalanceCents: -1 },
     },
   ]);
+
+  // 2. Convert balances to the user's target dashboard currency for global portfolio aggregates
+  const results = [];
+  for (const item of rawGroupBalances) {
+    const groupCurrency = item.baseCurrency ? item.baseCurrency.toUpperCase() : normalizedTargetCurrency;
+    const groupIdStr = item.groupId ? item.groupId.toString() : '';
+
+    let convertedNetCents = item.netBalanceCents;
+    let convertedCreditedCents = item.totalCreditedCents;
+    let convertedDebitedCents = item.totalDebitedCents;
+
+    if (groupCurrency !== normalizedTargetCurrency) {
+      try {
+        if (item.netBalanceCents !== 0) {
+          const netConv = await convertAmount({
+            amountCents: Math.abs(item.netBalanceCents),
+            fromCurrency: groupCurrency,
+            toCurrency: normalizedTargetCurrency,
+          });
+          convertedNetCents = item.netBalanceCents < 0 ? -netConv.convertedCents : netConv.convertedCents;
+        }
+
+        if (item.totalCreditedCents > 0) {
+          const creditConv = await convertAmount({
+            amountCents: item.totalCreditedCents,
+            fromCurrency: groupCurrency,
+            toCurrency: normalizedTargetCurrency,
+          });
+          convertedCreditedCents = creditConv.convertedCents;
+        }
+
+        if (item.totalDebitedCents > 0) {
+          const debitConv = await convertAmount({
+            amountCents: item.totalDebitedCents,
+            fromCurrency: groupCurrency,
+            toCurrency: normalizedTargetCurrency,
+          });
+          convertedDebitedCents = debitConv.convertedCents;
+        }
+      } catch (convErr) {
+        // Fallback to unconverted if conversion fails
+      }
+    }
+
+    results.push({
+      groupId: groupIdStr,
+      groupName: item.groupName,
+      baseCurrency: groupCurrency,
+      netBalanceCents: item.netBalanceCents,
+      totalCreditedCents: item.totalCreditedCents,
+      totalDebitedCents: item.totalDebitedCents,
+      convertedNetCents,
+      convertedCreditedCents,
+      convertedDebitedCents,
+      entryCount: item.entryCount,
+    });
+  }
+
+  return results;
 }
 
 module.exports = {

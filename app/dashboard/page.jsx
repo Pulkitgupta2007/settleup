@@ -113,10 +113,23 @@ export default function DashboardPage() {
     }
   };
 
-  // Compute aggregate totals across all groups
-  const totalCredited = balances.reduce((sum, b) => sum + (b.totalCreditedCents || 0), 0);
-  const totalDebited = balances.reduce((sum, b) => sum + (b.totalDebitedCents || 0), 0);
-  const netPosition = balances.reduce((sum, b) => sum + (b.netBalanceCents || 0), 0);
+  const userCurrency = session?.user?.defaultCurrency || 'USD';
+
+  // Compute aggregate totals across all groups in user's default portfolio currency
+  const totalReceivables = balances.reduce((sum, b) => {
+    const net = b.convertedNetCents ?? b.netBalanceCents ?? 0;
+    return net > 0 ? sum + net : sum;
+  }, 0);
+
+  const totalPayables = balances.reduce((sum, b) => {
+    const net = b.convertedNetCents ?? b.netBalanceCents ?? 0;
+    return net < 0 ? sum + Math.abs(net) : sum;
+  }, 0);
+
+  const netPosition = balances.reduce(
+    (sum, b) => sum + (b.convertedNetCents ?? b.netBalanceCents ?? 0),
+    0
+  );
 
 
 
@@ -174,7 +187,7 @@ export default function DashboardPage() {
                 netPosition > 0 ? 'text-credit' : netPosition < 0 ? 'text-debt' : 'text-bone'
               }`}
             >
-              {formatSignedCents(netPosition)}
+              {formatSignedCents(netPosition, userCurrency)}
             </div>
             <span className="text-xs font-mono text-bone-dark block mt-1">
               Consolidated portfolio standing
@@ -185,8 +198,12 @@ export default function DashboardPage() {
             <span className="text-[11px] font-sans text-bone-muted block mb-1">
               Total receivables (you are owed)
             </span>
-            <div className="font-display text-2xl sm:text-3xl font-medium text-credit tabular-nums">
-              +{formatCents(totalCredited)}
+            <div
+              className={`font-display text-2xl sm:text-3xl font-medium tabular-nums ${
+                totalReceivables > 0 ? 'text-credit' : 'text-bone-muted'
+              }`}
+            >
+              {totalReceivables > 0 ? `+${formatCents(totalReceivables, userCurrency)}` : formatCents(0, userCurrency)}
             </div>
             <span className="text-xs font-mono text-bone-dark block mt-1">
               Pending reimbursements from participants
@@ -197,8 +214,12 @@ export default function DashboardPage() {
             <span className="text-[11px] font-sans text-bone-muted block mb-1">
               Total payables (you owe)
             </span>
-            <div className="font-display text-2xl sm:text-3xl font-medium text-debt tabular-nums">
-              -{formatCents(totalDebited)}
+            <div
+              className={`font-display text-2xl sm:text-3xl font-medium tabular-nums ${
+                totalPayables > 0 ? 'text-debt' : 'text-bone-muted'
+              }`}
+            >
+              {totalPayables > 0 ? `-${formatCents(totalPayables, userCurrency)}` : formatCents(0, userCurrency)}
             </div>
             <span className="text-xs font-mono text-bone-dark block mt-1">
               Outstanding settlement liabilities
@@ -281,7 +302,7 @@ export default function DashboardPage() {
         {/* Groups Grid with Structural Hierarchy */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {groups.map((group) => {
-            const groupBalance = balances.find((b) => b.groupId === group._id);
+            const groupBalance = balances.find((b) => String(b.groupId) === String(group._id));
             const netCents = groupBalance?.netBalanceCents || 0;
 
             return (
@@ -314,17 +335,28 @@ export default function DashboardPage() {
                     <span className="text-[10px] font-sans text-bone-dark block">
                       Your net standing
                     </span>
-                    <span
-                      className={`font-mono text-sm font-semibold tabular-nums ${
-                        netCents > 0
-                          ? 'text-credit'
-                          : netCents < 0
-                          ? 'text-debt'
-                          : 'text-bone-muted'
-                      }`}
-                    >
-                      {formatSignedCents(netCents, group.baseCurrency)}
-                    </span>
+                    <div className="flex items-baseline gap-1.5 flex-wrap">
+                      <span
+                        className={`font-mono text-sm font-semibold tabular-nums ${
+                          netCents > 0
+                            ? 'text-credit'
+                            : netCents < 0
+                            ? 'text-debt'
+                            : 'text-bone-muted'
+                        }`}
+                      >
+                        {formatSignedCents(netCents, group.baseCurrency)}
+                      </span>
+                      {netCents !== 0 && (
+                        <span
+                          className={`text-[10px] font-sans font-medium uppercase ${
+                            netCents > 0 ? 'text-credit' : 'text-debt'
+                          }`}
+                        >
+                          ({netCents > 0 ? 'Receives' : 'You owe'})
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">

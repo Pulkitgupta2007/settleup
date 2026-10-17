@@ -198,8 +198,18 @@ async function convertAmount({
   toCurrency,
   options = {},
 }) {
-  if (!Number.isInteger(amountCents) || amountCents <= 0) {
-    throw new ValidationError(`amountCents must be a strictly positive integer, got ${amountCents}`);
+  if (amountCents === 0) {
+    return {
+      convertedCents: 0,
+      rate: 1.0,
+      isStale: false,
+      fxTimestamp: new Date(),
+      source: 'zero',
+    };
+  }
+
+  if (!Number.isInteger(amountCents) || amountCents < 0) {
+    throw new ValidationError(`amountCents must be a non-negative integer, got ${amountCents}`);
   }
 
   const from = fromCurrency.toUpperCase().trim();
