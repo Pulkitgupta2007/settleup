@@ -416,15 +416,6 @@ export default function GroupDetailPage({ params }) {
                 <span className="text-[10px] font-mono uppercase px-2 py-0.5 border border-ledger-border bg-ledger-subpanel text-bone">
                   Base: {group?.baseCurrency}
                 </span>
-                <span
-                  className={`text-[10px] font-mono uppercase px-2 py-0.5 border ${
-                    isFullySettled
-                      ? 'border-credit/50 bg-credit/10 text-credit'
-                      : 'border-debt/50 bg-debt/10 text-debt-light'
-                  }`}
-                >
-                  {isFullySettled ? 'Fully settled' : 'Settlement pending'}
-                </span>
               </div>
               <p className="text-xs text-bone-muted font-sans">
                 {group?.description || 'Append-only ledger group with multi-currency conversion.'}
